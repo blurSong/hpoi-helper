@@ -5,9 +5,16 @@
 ## 安装
 
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 浏览器扩展
-2. 克隆本仓库，执行 `pnpm install && pnpm build`，构建产物位于 `dist/hpoi-helper.user.js`
-3. 在 Tampermonkey 管理面板中选择「从文件安装」，导入上述文件
-4. Tampermonkey 弹出安装确认页，点击「安装」
+2. 点击 [`dist/hpoi-helper.user.js`](./dist/hpoi-helper.user.js) 查看文件，然后点击 **Raw** 按钮——Tampermonkey 会自动识别并弹出安装确认页，点击「安装」即可
+
+**从源码构建安装：**
+
+```bash
+git clone <repo-url> && cd hpoi-helper
+pnpm install && pnpm build
+```
+
+构建产物位于 `dist/hpoi-helper.user.js`，在 Tampermonkey 管理面板中选择「从文件安装」导入。
 
 ## 使用
 
@@ -51,7 +58,7 @@ pnpm test     # 运行测试
 
 ## 参考项目
 
-架构参考 [Bilibili-Evolved](https://github.com/the1812/Bilibili-Evolved)（作为 git submodule 收录于本仓库）。
+架构参考 [Bilibili-Evolved](https://github.com/the1812/Bilibili-Evolved)。
 
 ## License
 
