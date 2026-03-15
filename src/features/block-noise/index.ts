@@ -2,6 +2,7 @@ import { defineComponent } from '../../components/define'
 import { componentTags } from '../../components/tags'
 import { addStyle, removeStyle } from '../../core/style'
 import { settings } from '../../core/settings'
+import { dq } from '../../core/utils'
 import type { OptionsSchema } from '../../components/types'
 
 // ---------------------------------------------------------------------------
@@ -44,28 +45,24 @@ const schema = {
 type Opts = { [K in keyof typeof schema]: boolean }
 
 // ---------------------------------------------------------------------------
-// CSS rules — one entry per option
+// CSS rules for options that can be targeted unambiguously
 // ---------------------------------------------------------------------------
 
-const RULES: Record<keyof Opts, { id: string; css: string }> = {
+// blockLeftShopRecommend is intentionally absent here — see DOM approach below.
+// CSS :has() selectors still hit 待补款 (which also renders .hpoi-taobao-box
+// items), so we locate 商品推荐 by its unique #taobao-more anchor instead.
+const CSS_RULES: Partial<Record<keyof Opts, { id: string; css: string }>> = {
   blockRightAdBanner: {
     id: 'bn-right-ad',
     css: `.swiper-container.swiper-home, .hpoi-home-img-box { display: none !important; }`,
   },
   blockRightRanking: {
     id: 'bn-right-ranking',
-    // The ranking box is the first .hpoi-home-box-rt; the hot-recommend box also has .home-article
     css: `.hpoi-home-box-rt:not(.home-article) { display: none !important; }`,
   },
   blockRightHotRecommend: {
     id: 'bn-right-hot',
     css: `.hpoi-home-box-rt.home-article { display: none !important; }`,
-  },
-  blockLeftShopRecommend: {
-    id: 'bn-left-shop',
-    // Use :has(.hpoi-taobao-box) to target only the 商品推荐 box.
-    // Other .hpoi-home-box-lt sections (关注动态, 待补款) do NOT contain .hpoi-taobao-box.
-    css: `.hpoi-home-box-lt:has(.hpoi-taobao-box) { display: none !important; }`,
   },
   blockLeftPraiseRanking: {
     id: 'bn-left-praise',
@@ -80,10 +77,7 @@ const RULES: Record<keyof Opts, { id: string; css: string }> = {
 // Applied when ALL three right-column sections are blocked
 const EXPAND_ID = 'bn-layout-expand'
 const EXPAND_CSS = `
-  /* Hide the now-empty right column */
   .home-right { display: none !important; }
-
-  /* Expand middle feed from 50% to 75% in the 24-column grid */
   .container.user-home > .row > .col-sm-12 {
     width: 75% !important;
     flex: 0 0 75% !important;
@@ -92,19 +86,47 @@ const EXPAND_CSS = `
 `
 
 // ---------------------------------------------------------------------------
+// DOM-based hiding for 商品推荐
+// (CSS selectors cannot reliably distinguish it from 待补款/关注动态)
+// ---------------------------------------------------------------------------
+
+/** The 商品推荐 box element, cached after first lookup */
+let shopBox: HTMLElement | null = null
+
+function findShopBox(): HTMLElement | null {
+  if (shopBox) return shopBox
+  // #taobao-more is the "更多" link unique to 商品推荐
+  shopBox = dq<HTMLElement>('#taobao-more')?.closest<HTMLElement>('.hpoi-home-box-lt') ?? null
+  return shopBox
+}
+
+function applyShopRecommend(hide: boolean): void {
+  const el = findShopBox()
+  if (!el) return
+  if (hide) {
+    el.style.setProperty('display', 'none', 'important')
+  } else {
+    el.style.removeProperty('display')
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Apply / remove helpers
 // ---------------------------------------------------------------------------
 
 function applyStyles(opts: Opts) {
-  for (const [key, { id, css }] of Object.entries(RULES) as Array<[keyof Opts, (typeof RULES)[keyof Opts]]>) {
+  for (const key of Object.keys(CSS_RULES) as Array<keyof typeof CSS_RULES>) {
+    const rule = CSS_RULES[key]!
     if (opts[key]) {
-      addStyle(css, id)
+      addStyle(rule.css, rule.id)
     } else {
-      removeStyle(id)
+      removeStyle(rule.id)
     }
   }
 
-  // Expand the middle column only when the entire right column is empty
+  applyShopRecommend(opts.blockLeftShopRecommend)
+
+  // Expand the middle column only when the entire right column is gone
   if (opts.blockRightAdBanner && opts.blockRightRanking && opts.blockRightHotRecommend) {
     addStyle(EXPAND_CSS, EXPAND_ID)
   } else {
@@ -113,12 +135,14 @@ function applyStyles(opts: Opts) {
 }
 
 function removeAllStyles() {
-  for (const { id } of Object.values(RULES)) removeStyle(id)
+  for (const rule of Object.values(CSS_RULES)) removeStyle(rule!.id)
   removeStyle(EXPAND_ID)
+  applyShopRecommend(false)
+  shopBox = null
 }
 
 // ---------------------------------------------------------------------------
-// Module-level cleanup handles (populated on entry, cleared on unload)
+// Module-level cleanup handles
 // ---------------------------------------------------------------------------
 
 let cleanups: Array<() => void> = []
@@ -134,7 +158,6 @@ export const component = defineComponent({
   tags: [componentTags.display],
   enabledByDefault: false,
 
-  // Run on both the user home page and all hobby section pages
   urlInclude: [/hpoi\.net\/user\/home/, /hpoi\.net\/hobby/],
 
   options: schema,
@@ -142,7 +165,6 @@ export const component = defineComponent({
   entry: ({ options }) => {
     applyStyles(options as Opts)
 
-    // Re-apply whenever any individual option is toggled in the settings UI
     cleanups = (Object.keys(schema) as Array<keyof Opts>).map((key) =>
       settings.onChange(`components.blockNoise.options.${key}`, () => {
         const { options: current } = settings.getComponent<typeof schema>('blockNoise', schema)
