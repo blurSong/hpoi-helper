@@ -54,6 +54,15 @@ export interface ComponentMetadata<S extends OptionsSchema = OptionsSchema> {
   /** Whether this component is enabled by default (default: false) */
   enabledByDefault?: boolean
 
+  // --- UI ---
+  /**
+   * When true, the settings panel omits the component-level enable toggle
+   * and shows only the option controls. Use for components whose sub-options
+   * already provide full control (a master toggle would be redundant).
+   * The component should also set enabledByDefault: true.
+   */
+  alwaysOn?: boolean
+
   // --- Styles ---
   /** CSS to inject immediately when the component loads */
   instantStyles?: InstantStyle[]

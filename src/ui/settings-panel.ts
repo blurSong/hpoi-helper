@@ -244,29 +244,32 @@ function renderComponentRow(meta: ComponentMetadata, body: HTMLElement): void {
   }
   header.appendChild(info)
 
-  // Component-level enabled toggle
-  header.appendChild(
-    makeSwitch(compSettings.enabled, async (enabled) => {
-      if (enabled) {
-        await enableComponent(meta.name)
-      } else {
-        disableComponent(meta.name)
-      }
-      // Re-render this row to show/hide option controls
-      const updated = body.querySelector(`[data-comp="${meta.name}"]`)
-      if (updated) {
-        const fresh = document.createElement('div')
-        fresh.setAttribute('data-comp', meta.name)
-        renderComponentRow(meta, fresh)
-        updated.replaceWith(fresh.firstChild!)
-      }
-    }),
-  )
+  // Component-level enabled toggle — omitted for alwaysOn components
+  if (!meta.alwaysOn) {
+    header.appendChild(
+      makeSwitch(compSettings.enabled, async (enabled) => {
+        if (enabled) {
+          await enableComponent(meta.name)
+        } else {
+          disableComponent(meta.name)
+        }
+        // Re-render this row to show/hide option controls
+        const updated = body.querySelector(`[data-comp="${meta.name}"]`)
+        if (updated) {
+          const fresh = document.createElement('div')
+          fresh.setAttribute('data-comp', meta.name)
+          renderComponentRow(meta, fresh)
+          updated.replaceWith(fresh.firstChild!)
+        }
+      }),
+    )
+  }
   row.appendChild(header)
 
-  // Option controls (only when enabled)
+  // Option controls — always shown for alwaysOn components; otherwise only when enabled
   const schema = meta.options
-  if (compSettings.enabled && schema && Object.keys(schema).length > 0) {
+  const showOptions = meta.alwaysOn ? true : compSettings.enabled
+  if (showOptions && schema && Object.keys(schema).length > 0) {
     const opts = document.createElement('div')
     opts.className = 'opts'
 

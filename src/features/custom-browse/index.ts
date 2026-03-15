@@ -80,6 +80,7 @@ export const component = defineComponent({
   description: '自定义资料库的浏览行为',
   tags: [componentTags.utility],
   enabledByDefault: true,
+  alwaysOn: true,
 
   options: schema,
 

@@ -156,7 +156,8 @@ export const component = defineComponent({
   displayName: '屏蔽噪音内容',
   description: '分别屏蔽首页和手办页的广告、推荐、排行榜等干扰内容',
   tags: [componentTags.display],
-  enabledByDefault: false,
+  enabledByDefault: true,
+  alwaysOn: true,
 
   urlInclude: [/hpoi\.net\/user\/home/, /hpoi\.net\/hobby/],
 
