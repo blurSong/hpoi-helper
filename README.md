@@ -5,8 +5,9 @@
 ## 安装
 
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 浏览器扩展
-2. 从 [Releases](../../releases) 下载最新的 `hpoi-helper.user.js`，或直接点击安装链接
-3. Tampermonkey 会弹出安装确认页，点击「安装」
+2. 克隆本仓库，执行 `pnpm install && pnpm build`，构建产物位于 `dist/hpoi-helper.user.js`
+3. 在 Tampermonkey 管理面板中选择「从文件安装」，导入上述文件
+4. Tampermonkey 弹出安装确认页，点击「安装」
 
 ## 功能列表
 
