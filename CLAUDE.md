@@ -65,7 +65,7 @@ src/
 
 **File:** `src/features/block-noise/index.ts`  |  **Pages:** `/user/home`, `/hobby/*`  |  `alwaysOn: true`
 
-Six boolean options (all default `false`). CSS injection for five; DOM lookup via `#taobao-more` for `blockLeftShopRecommend` (since `待补款` also uses `.hpoi-taobao-box`). When all three right-column options are true, middle feed expands from 50% → 75%.
+Seven boolean options (all default `false`). CSS injection for five; DOM lookup via `#taobao-more` for `blockLeftShopRecommend` (since `待补款` also uses `.hpoi-taobao-box`); conditional CSS for `blockItemRelatedProducts` (only on item pages `/hobby/\d+` where `.hpoi-taobao-box` is unambiguous). When all three right-column options are true, middle feed expands from 50% → 75%.
 
 ### `customBrowse` — 自定义浏览
 

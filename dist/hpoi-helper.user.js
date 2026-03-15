@@ -187,6 +187,11 @@ var matchCurrentUrl = (patterns) => {
 			defaultValue: false,
 			displayName: "【手办页】屏蔽顶部广告区",
 			description: "隐藏手办分区首页顶部的活动轮播和自营店广告图"
+		},
+		blockItemRelatedProducts: {
+			defaultValue: false,
+			displayName: "【条目页】屏蔽关联商品",
+			description: "隐藏条目详情页底部的淘宝关联商品推荐区"
 		}
 	};
 	var CSS_RULES = {
@@ -211,6 +216,9 @@ var matchCurrentUrl = (patterns) => {
 			css: `.hpoi-topcarousel-box { display: none !important; }`
 		}
 	};
+	var ITEM_PAGE_RE = /\/hobby\/\d+$/;
+	var ITEM_TAOBAO_ID = "bn-item-taobao";
+	var ITEM_TAOBAO_CSS = `.hpoi-taobao-box { display: none !important; }`;
 	var EXPAND_ID = "bn-layout-expand";
 	var EXPAND_CSS = `
   .home-right { display: none !important; }
@@ -239,12 +247,15 @@ var shopBox = null;
 			else removeStyle(rule.id);
 		}
 		applyShopRecommend(opts.blockLeftShopRecommend);
+		if (opts.blockItemRelatedProducts && ITEM_PAGE_RE.test(location.pathname)) addStyle(ITEM_TAOBAO_CSS, ITEM_TAOBAO_ID);
+		else removeStyle(ITEM_TAOBAO_ID);
 		if (opts.blockRightAdBanner && opts.blockRightRanking && opts.blockRightHotRecommend) addStyle(EXPAND_CSS, EXPAND_ID);
 		else removeStyle(EXPAND_ID);
 	}
 	function removeAllStyles() {
 		for (const rule of Object.values(CSS_RULES)) removeStyle(rule.id);
 		removeStyle(EXPAND_ID);
+		removeStyle(ITEM_TAOBAO_ID);
 		applyShopRecommend(false);
 		shopBox = null;
 	}

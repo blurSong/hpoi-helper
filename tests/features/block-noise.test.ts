@@ -8,7 +8,8 @@ vi.stubGlobal('GM_addStyle', undefined)
 // Each test gets a fresh module state
 const load = async (url = 'https://www.hpoi.net/user/home') => {
   vi.resetModules()
-  vi.stubGlobal('location', { href: url })
+  const u = new URL(url)
+  vi.stubGlobal('location', { href: url, pathname: u.pathname, search: u.search, origin: u.origin })
   const mod = await import('../../src/features/block-noise')
   return mod.component
 }
@@ -35,6 +36,7 @@ describe('block-noise — homepage', () => {
       blockLeftShopRecommend: false,
       blockLeftPraiseRanking: false,
       blockHobbyTopBanner: false,
+      blockItemRelatedProducts: false,
     }, enabled: true })
     expect(document.head.querySelectorAll('style').length).toBe(0)
   })
@@ -48,6 +50,7 @@ describe('block-noise — homepage', () => {
       blockLeftShopRecommend: false,
       blockLeftPraiseRanking: false,
       blockHobbyTopBanner: false,
+      blockItemRelatedProducts: false,
     }, enabled: true })
     expect(styleCount('bn-right-ad')).toBe(1)
     expect(styleCount('bn-layout-expand')).toBe(0) // not all right-col blocked
@@ -62,6 +65,7 @@ describe('block-noise — homepage', () => {
       blockLeftShopRecommend: false,
       blockLeftPraiseRanking: false,
       blockHobbyTopBanner: false,
+      blockItemRelatedProducts: false,
     }, enabled: true })
     expect(styleCount('bn-right-ad')).toBe(1)
     expect(styleCount('bn-right-ranking')).toBe(1)
@@ -78,6 +82,7 @@ describe('block-noise — homepage', () => {
       blockLeftShopRecommend: false,
       blockLeftPraiseRanking: false,
       blockHobbyTopBanner: false,
+      blockItemRelatedProducts: false,
     }, enabled: true })
     expect(styleCount('bn-layout-expand')).toBe(0)
   })
@@ -91,6 +96,7 @@ describe('block-noise — homepage', () => {
       blockLeftShopRecommend: true,
       blockLeftPraiseRanking: true,
       blockHobbyTopBanner: false,
+      blockItemRelatedProducts: false,
     }, enabled: true })
     expect(document.head.querySelectorAll('style').length).toBeGreaterThan(0)
 
@@ -117,6 +123,7 @@ describe('block-noise — hobby page', () => {
       blockLeftShopRecommend: false,
       blockLeftPraiseRanking: false,
       blockHobbyTopBanner: true,
+      blockItemRelatedProducts: false,
     }, enabled: true })
     expect(styleCount('bn-hobby-top')).toBe(1)
   })
@@ -130,9 +137,58 @@ describe('block-noise — hobby page', () => {
       blockLeftShopRecommend: false,
       blockLeftPraiseRanking: false,
       blockHobbyTopBanner: true,
+      blockItemRelatedProducts: false,
     }, enabled: true })
     const styleEl = document.head.querySelector('[data-hpoi-style="bn-hobby-top"]')
     expect(styleEl?.textContent).toContain('.hpoi-topcarousel-box')
     expect(styleEl?.textContent).toContain('display: none')
+  })
+})
+
+const ALL_OFF = {
+  blockRightAdBanner: false,
+  blockRightRanking: false,
+  blockRightHotRecommend: false,
+  blockLeftShopRecommend: false,
+  blockLeftPraiseRanking: false,
+  blockHobbyTopBanner: false,
+  blockItemRelatedProducts: false,
+}
+
+describe('block-noise — item page (关联商品)', () => {
+  beforeEach(() => {
+    vi.mocked(GM_getValue).mockReturnValue(undefined)
+    document.head.innerHTML = ''
+  })
+  afterEach(() => {
+    document.head.innerHTML = ''
+  })
+
+  it('injects taobao-box hide style on item page when enabled', async () => {
+    const c = await load('https://www.hpoi.net/hobby/120928')
+    await c.entry!({ options: { ...ALL_OFF, blockItemRelatedProducts: true }, enabled: true })
+    expect(styleCount('bn-item-taobao')).toBe(1)
+    const styleEl = document.head.querySelector('[data-hpoi-style="bn-item-taobao"]')
+    expect(styleEl?.textContent).toContain('.hpoi-taobao-box')
+  })
+
+  it('does NOT inject taobao-box style on homepage even when enabled', async () => {
+    const c = await load('https://www.hpoi.net/user/home')
+    await c.entry!({ options: { ...ALL_OFF, blockItemRelatedProducts: true }, enabled: true })
+    expect(styleCount('bn-item-taobao')).toBe(0)
+  })
+
+  it('does NOT inject taobao-box style on archive page', async () => {
+    const c = await load('https://www.hpoi.net/hobby/all')
+    await c.entry!({ options: { ...ALL_OFF, blockItemRelatedProducts: true }, enabled: true })
+    expect(styleCount('bn-item-taobao')).toBe(0)
+  })
+
+  it('removes style on unload', async () => {
+    const c = await load('https://www.hpoi.net/hobby/120928')
+    await c.entry!({ options: { ...ALL_OFF, blockItemRelatedProducts: true }, enabled: true })
+    expect(styleCount('bn-item-taobao')).toBe(1)
+    await c.unload!()
+    expect(styleCount('bn-item-taobao')).toBe(0)
   })
 })

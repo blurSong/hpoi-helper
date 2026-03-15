@@ -40,6 +40,11 @@ const schema = {
     displayName: '【手办页】屏蔽顶部广告区',
     description: '隐藏手办分区首页顶部的活动轮播和自营店广告图',
   },
+  blockItemRelatedProducts: {
+    defaultValue: false as boolean,
+    displayName: '【条目页】屏蔽关联商品',
+    description: '隐藏条目详情页底部的淘宝关联商品推荐区',
+  },
 } satisfies OptionsSchema
 
 type Opts = { [K in keyof typeof schema]: boolean }
@@ -73,6 +78,14 @@ const CSS_RULES: Partial<Record<keyof Opts, { id: string; css: string }>> = {
     css: `.hpoi-topcarousel-box { display: none !important; }`,
   },
 }
+
+// Item detail pages: /hobby/<digits> (NOT /hobby/all, /hobby/push, etc.)
+const ITEM_PAGE_RE = /\/hobby\/\d+$/
+
+// CSS for hiding 关联商品 on item pages — safe because .hpoi-taobao-box is
+// unambiguous there (no 待补款 ambiguity like on the homepage).
+const ITEM_TAOBAO_ID = 'bn-item-taobao'
+const ITEM_TAOBAO_CSS = `.hpoi-taobao-box { display: none !important; }`
 
 // Applied when ALL three right-column sections are blocked
 const EXPAND_ID = 'bn-layout-expand'
@@ -126,6 +139,13 @@ function applyStyles(opts: Opts) {
 
   applyShopRecommend(opts.blockLeftShopRecommend)
 
+  // 关联商品 on item detail pages only
+  if (opts.blockItemRelatedProducts && ITEM_PAGE_RE.test(location.pathname)) {
+    addStyle(ITEM_TAOBAO_CSS, ITEM_TAOBAO_ID)
+  } else {
+    removeStyle(ITEM_TAOBAO_ID)
+  }
+
   // Expand the middle column only when the entire right column is gone
   if (opts.blockRightAdBanner && opts.blockRightRanking && opts.blockRightHotRecommend) {
     addStyle(EXPAND_CSS, EXPAND_ID)
@@ -137,6 +157,7 @@ function applyStyles(opts: Opts) {
 function removeAllStyles() {
   for (const rule of Object.values(CSS_RULES)) removeStyle(rule!.id)
   removeStyle(EXPAND_ID)
+  removeStyle(ITEM_TAOBAO_ID)
   applyShopRecommend(false)
   shopBox = null
 }
