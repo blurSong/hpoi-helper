@@ -88,6 +88,7 @@ describe('link patching', () => {
       href: 'https://www.hpoi.net/hobby/',
       pathname: '/hobby/',
       search: '',
+      origin: 'https://www.hpoi.net',
     })
 
     const link = document.createElement('a')
@@ -98,5 +99,35 @@ describe('link patching', () => {
     await component.entry!({ options: {}, enabled: true })
 
     expect(link.getAttribute('href')).toBe('/hobby/all?order=add&category=100')
+  })
+
+  it('restores original href on unload', async () => {
+    const SAVED = '?order=hits&sex=0&r18=199&category=1'
+    const ORIGINAL = '/hobby/all?order=add&category=100'
+
+    vi.resetModules()
+    vi.mocked(GM_getValue).mockReturnValue(undefined)
+    vi.stubGlobal('location', {
+      href: 'https://www.hpoi.net/hobby/',
+      pathname: '/hobby/',
+      search: '',
+      origin: 'https://www.hpoi.net',
+    })
+
+    const { settings } = await import('../../src/core/settings')
+    const { component } = await import('../../src/features/remember-filter')
+
+    settings.set('rememberFilter.savedQuery', SAVED)
+
+    const link = document.createElement('a')
+    link.setAttribute('href', ORIGINAL)
+    document.body.appendChild(link)
+
+    await component.entry!({ options: {}, enabled: true })
+    expect(link.getAttribute('href')).toBe('/hobby/all' + SAVED)
+
+    // Unload should restore the original href
+    await component.unload!()
+    expect(link.getAttribute('href')).toBe(ORIGINAL)
   })
 })

@@ -39,8 +39,15 @@ function maybeSave(): void {
 }
 
 /**
+ * Map of patched anchors → their original href before we rewrote them.
+ * Used by restoreLinks() to undo changes on unload.
+ */
+const patchedLinks = new Map<HTMLAnchorElement, string>()
+
+/**
  * Find every <a> linking to the hobby archive and rewrite its href
  * so it points to the user's saved filters instead of the default.
+ * Stores the original href so it can be restored later.
  */
 function patchLinks(): void {
   const saved = settings.get<string>(SAVED_QUERY_PATH)
@@ -48,16 +55,25 @@ function patchLinks(): void {
 
   for (const a of dqa<HTMLAnchorElement>('a[href*="hobby/all"]')) {
     try {
-      // Use getAttribute to get the raw href value (avoids browser/jsdom origin resolution)
       const raw = a.getAttribute('href') ?? ''
       const u = new URL(raw, location.origin)
-      if (u.pathname.endsWith('/hobby/all')) {
-        a.setAttribute('href', u.pathname + saved)
-      }
+      if (!u.pathname.endsWith('/hobby/all')) continue
+
+      // Only store the original once per element
+      if (!patchedLinks.has(a)) patchedLinks.set(a, raw)
+      a.setAttribute('href', u.pathname + saved)
     } catch {
       // ignore malformed hrefs
     }
   }
+}
+
+/** Restore every patched anchor to its original href */
+function restoreLinks(): void {
+  for (const [a, original] of patchedLinks) {
+    a.setAttribute('href', original)
+  }
+  patchedLinks.clear()
 }
 
 // ---------------------------------------------------------------------------
@@ -96,6 +112,7 @@ export const component = defineComponent({
   },
 
   unload: () => {
+    restoreLinks()
     for (const fn of cleanups) fn()
     cleanups = []
   },
