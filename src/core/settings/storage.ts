@@ -27,9 +27,3 @@ export function saveSettings(settings: Settings): void {
     GM_setValue(KEY, JSON.stringify(settings))
   }
 }
-
-export function clearSettings(): void {
-  if (isGMAvailable()) {
-    GM_deleteValue(KEY)
-  }
-}

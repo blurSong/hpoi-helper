@@ -16,11 +16,11 @@ pnpm build            # Production build → dist/hpoi-helper.user.js
 
 pnpm test             # Run all tests (vitest + jsdom)
 pnpm test:watch       # Watch mode
-pnpm test:coverage    # Coverage report (80% threshold)
+pnpm test:coverage    # Coverage report
 
 pnpm lint:check       # ESLint check
 pnpm lint             # ESLint with auto-fix
-pnpm type-check       # TypeScript check (tsc --noEmit)
+pnpm type-check       # TypeScript check (tsc --noEmit) — must pass before publish
 pnpm check-all        # type-check + lint:check + test
 ```
 
@@ -28,68 +28,50 @@ pnpm check-all        # type-check + lint:check + test
 
 ```
 src/
-├── main.ts                  # Bootstrap: auto-discovers features via import.meta.glob, runs lifecycle
+├── main.ts                      # Bootstrap: auto-discovers features via import.meta.glob
 ├── core/
-│   ├── core-apis.ts         # Aggregated API object (coreApis) passed to components
-│   ├── lifecycle.ts         # LifecycleEvent enum + raiseLifecycleEvent()
-│   ├── logger.ts            # Structured logger with [Hpoi Helper] prefix and log levels
-│   ├── observer.ts          # observeChildren / observeSubtree / onUrlChange
-│   ├── spin-query.ts        # spinQuery() / spinQueryAll() — async DOM polling
-│   ├── style.ts             # addStyle(css, id?) / removeStyle(id) — CSS injection via GM_addStyle
+│   ├── lifecycle.ts             # LifecycleEvent enum + raiseLifecycleEvent()
+│   ├── logger.ts                # Structured logger with [Hpoi Helper] prefix
+│   ├── observer.ts              # onUrlChange() — detects pushState/popstate navigation
+│   ├── spin-query.ts            # spinQuery() / spinQueryAll() — async DOM polling
+│   ├── style.ts                 # addStyle(css, id?) / removeStyle(id) — CSS injection
 │   ├── settings/
-│   │   ├── index.ts         # settings.get/set/onChange/getComponent — main API
-│   │   ├── storage.ts       # GM_getValue/GM_setValue adapter (falls back to defaults in tests)
-│   │   └── types.ts         # Settings, ComponentSettings, OptionsSchema types
+│   │   ├── index.ts             # settings.get/set/onChange/getComponent
+│   │   ├── storage.ts           # GM_getValue/GM_setValue adapter
+│   │   └── types.ts             # Settings, ComponentSettings, OptionsSchema types
 │   └── utils/
-│       ├── index.ts         # dq() / dqa() / matchCurrentUrl()
-│       ├── urls.ts          # urlPatterns — regex constants for hpoi.net page types
-│       └── constants.ts     # SCRIPT_NAME, LOG_PREFIX, STORAGE_KEY_PREFIX, VERSION
+│       ├── index.ts             # dq() / dqa() / matchCurrentUrl()
+│       ├── urls.ts              # urlPatterns for hpoi.net page types
+│       └── constants.ts         # SCRIPT_NAME, LOG_PREFIX, STORAGE_KEY_PREFIX, VERSION
 ├── components/
-│   ├── define.ts            # defineComponent<S>() — type-safe metadata helper
-│   ├── types.ts             # ComponentMetadata, InstantStyle, TestPattern types
-│   ├── tags.ts              # componentTags — display/utility/style/data
-│   └── loader.ts            # loadAllComponents(), enableComponent(), disableComponent()
-├── plugins/
-│   └── types.ts             # Plugin type stubs (PluginMetadata, DataProvider, HookHandlers)
+│   ├── define.ts                # defineComponent<S>() — type-safe metadata helper
+│   ├── types.ts                 # ComponentMetadata, TestPattern, alwaysOn flag
+│   ├── tags.ts                  # componentTags — display/utility/style/data
+│   └── loader.ts                # registerComponents, loadAllComponents, enable/disable
 ├── ui/
-│   └── settings-panel.ts    # Floating ⚙ button + Shadow DOM settings panel
+│   └── settings-panel.ts        # Floating ⚙ button + Shadow DOM settings panel
 └── features/
-    ├── example/index.ts     # Minimal component validating the bootstrap pipeline
-    └── block-noise/index.ts # Blocks ads and noise on homepage and hobby pages
+    ├── block-noise/index.ts     # Blocks ads and noise on homepage and hobby pages
+    └── custom-browse/index.ts   # Remembers archive filter settings across visits
 ```
 
 ## Settings UI
 
-**File:** `src/ui/settings-panel.ts`
-**Mounted by:** `main.ts` after `loadAllComponents()` completes
-
-A floating ⚙ button (fixed bottom-right, 42 px, indigo) rendered inside a Shadow DOM host (`#hpoi-helper-settings`). Clicking opens a panel that lists all registered components with:
-- A toggle to enable/disable the component (calls `enableComponent` / `disableComponent`)
-- Per-option controls when the component is enabled: boolean → toggle switch, number → number input, string with `choices` → select, free string → text input
-
-The panel re-renders its body on every open so it always reflects persisted state. Styles are fully isolated from hpoi.net via Shadow DOM.
+`src/ui/settings-panel.ts` — floating ⚙ button (bottom-right, Shadow DOM isolated). Components with `alwaysOn: true` skip the component-level enable toggle and show only sub-options.
 
 ## Implemented Features
 
-### `block-noise` — 屏蔽噪音内容
+### `blockNoise` — 屏蔽噪音内容
 
-**File:** `src/features/block-noise/index.ts`
-**Pages:** `/user/home`, `/hobby/*`
+**File:** `src/features/block-noise/index.ts`  |  **Pages:** `/user/home`, `/hobby/*`  |  `alwaysOn: true`
 
-Six independent boolean options, all defaulting to `false`:
+Six boolean options (all default `false`). CSS injection for five; DOM lookup via `#taobao-more` for `blockLeftShopRecommend` (since `待补款` also uses `.hpoi-taobao-box`). When all three right-column options are true, middle feed expands from 50% → 75%.
 
-| Option key | Effect |
-|---|---|
-| `blockRightAdBanner` | Hides homepage right-col ad carousel + image buttons |
-| `blockRightRanking` | Hides homepage right-col 近期发售/周边期待榜 |
-| `blockRightHotRecommend` | Hides homepage right-col 热门推荐 articles |
-| `blockLeftShopRecommend` | Hides homepage left-col 商品推荐 |
-| `blockLeftPraiseRanking` | Hides homepage left-col 获赞排行榜 |
-| `blockHobbyTopBanner` | Hides hobby page top promo carousel + shop ad images |
+### `customBrowse` — 自定义浏览
 
-When all three right-column options are `true`, the middle feed column auto-expands from 50% → 75% and the right column is hidden entirely.
+**File:** `src/features/custom-browse/index.ts`  |  **Pages:** all  |  `alwaysOn: true`
 
-Implementation: CSS injection via `addStyle()`; each option maps to a `data-hpoi-style` id so styles can be added/removed independently. Settings listeners re-apply on runtime toggle.
+One option `rememberFilter` (default `true`): saves the archive query string at `rememberFilter.savedQuery` when user is on `/hobby/all` with non-default filters. On all pages, rewrites `a[href*="hobby/all"]` links. Restores original hrefs on unload.
 
 ## Adding a Feature Component
 
@@ -100,30 +82,26 @@ import { defineComponent } from '../../components/define'
 import { componentTags } from '../../components/tags'
 
 export const component = defineComponent({
-  name: 'myFeature',            // unique camelCase ID
+  name: 'myFeature',
   displayName: '我的功能',
-  description: 'Shown in settings UI',
   tags: [componentTags.utility],
   enabledByDefault: false,
-  urlInclude: /hpoi\.net\/hobby\/(?!\d)/,  // optional page targeting
   options: {
     limit: { defaultValue: 10 as number, displayName: '数量限制' },
   },
-  entry: ({ options }) => {
-    // called once when enabled; options is fully typed
-  },
+  entry: ({ options }) => { /* called once when enabled */ },
   unload: () => { /* cleanup */ },
 })
 ```
 
-`import.meta.glob` in `main.ts` discovers all `src/features/*/index.ts` automatically — no registration needed.
+`import.meta.glob` in `main.ts` discovers all `src/features/*/index.ts` — no registration needed.
 
 ## Key Conventions
 
-- DOM queries: `dq()` / `dqa()` for synchronous; `spinQuery()` for elements that load dynamically
-- Settings: `settings.getComponent(name, schema)` reads persisted options; `settings.onChange(path, fn)` returns an unsubscribe function — always call it in `unload`
-- Style injection: use `addStyle(css, id)` with a stable `id`; pair each `addStyle` in `entry` with `removeStyle(id)` in `unload`
-- Component registry: `registerComponents(list)` in `main.ts` populates `allComponents` in the loader before `loadAllComponents` runs; the settings panel calls `getAllComponents()` to list all components including disabled ones. `enableComponent(name)` handles both first-time loading (calls `loadComponent`) and re-enabling (calls `reload`)
-- Option values: use `false as boolean` (not `false`) in schema `defaultValue` to keep the TypeScript type as `boolean`, not the literal `false`
-- Tests: live in `tests/`, use vitest + jsdom; stub GM APIs with `vi.stubGlobal` before importing the module under test; call `vi.resetModules()` between tests that share module state
-- Plugin system: types defined in `src/plugins/types.ts`; logic not yet implemented
+- DOM queries: `dq()` / `dqa()` synchronous; `spinQuery()` for dynamic content
+- Settings: `settings.onChange(path, fn)` returns unsubscribe — always call in `unload`
+- Style injection: `addStyle(css, id)` paired with `removeStyle(id)` in `unload`
+- Option defaults: use `false as boolean` (not literal `false`) for correct TypeScript inference
+- Lifecycle hooks that may return void: wrap with `Promise.resolve(fn()).catch(...)` in loader
+- Tests: vitest + jsdom; stub GM APIs with `vi.stubGlobal`; `vi.resetModules()` between tests
+- `alwaysOn: true` on a component hides the master toggle in the settings panel

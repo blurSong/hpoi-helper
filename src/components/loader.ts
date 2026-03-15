@@ -85,7 +85,7 @@ export async function enableComponent(name: string): Promise<void> {
   const meta = loadedComponents.get(name)
   if (meta) {
     // Already running — call reload hook if available
-    if (meta.reload) meta.reload().catch((e) => logger.error(`reload error in "${name}":`, e))
+    if (meta.reload) Promise.resolve(meta.reload()).catch((e: unknown) => logger.error(`reload error in "${name}":`, e))
   } else {
     // Was disabled on page load — run full entry now
     const registered = allComponents.get(name)
@@ -98,7 +98,7 @@ export function disableComponent(name: string): void {
   const meta = loadedComponents.get(name)
   if (meta) {
     for (const { id } of meta.instantStyles ?? []) removeStyle(`${name}:${id}`)
-    if (meta.unload) meta.unload().catch((e) => logger.error(`unload error in "${name}":`, e))
+    if (meta.unload) Promise.resolve(meta.unload()).catch((e: unknown) => logger.error(`unload error in "${name}":`, e))
     loadedComponents.delete(name)
   }
 }
