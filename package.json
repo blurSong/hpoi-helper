@@ -15,7 +15,7 @@
     "check-all": "pnpm type-check && pnpm lint:check && pnpm test"
   },
   "keywords": [],
-  "author": "",
+  "author": "blurSong",
   "license": "MIT",
   "packageManager": "pnpm@10.32.1",
   "vitest": {

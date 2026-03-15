@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Hpoi Helper
-// @namespace    https://github.com/yourname/hpoi-helper
+// @namespace    https://github.com/blurSong/hpoi-helper
 // @version      0.1.0
-// @author       You
+// @author       blurSong
 // @description  Enhancements for www.hpoi.net
 // @license      MIT
 // @icon         https://www.hpoi.net/favicon.ico

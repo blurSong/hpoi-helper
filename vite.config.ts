@@ -14,10 +14,10 @@ export default defineConfig({
       entry: 'src/main.ts',
       userscript: {
         name: 'Hpoi Helper',
-        namespace: 'https://github.com/yourname/hpoi-helper',
+        namespace: 'https://github.com/blurSong/hpoi-helper',
         version: pkg.version,
         description: 'Enhancements for www.hpoi.net',
-        author: 'You',
+        author: 'blurSong',
         match: ['*://www.hpoi.net/*', '*://hpoi.net/*'],
         icon: 'https://www.hpoi.net/favicon.ico',
         grant: [
