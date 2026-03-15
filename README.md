@@ -5,7 +5,7 @@
 ## 安装
 
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 浏览器扩展
-2. 点击 [`dist/hpoi-helper.user.js`](./dist/hpoi-helper.user.js) 查看文件，然后点击 **Raw** 按钮——Tampermonkey 会自动识别并弹出安装确认页，点击「安装」即可
+2. 安装 [脚本](https://raw.githubusercontent.com/blurSong/hpoi-helper/main/dist/hpoi-helper.user.js)
 
 **从源码构建安装：**
 
