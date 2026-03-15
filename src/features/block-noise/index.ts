@@ -82,11 +82,6 @@ const CSS_RULES: Partial<Record<keyof Opts, { id: string; css: string }>> = {
 // Item detail pages: /hobby/<digits> (NOT /hobby/all, /hobby/push, etc.)
 const ITEM_PAGE_RE = /\/hobby\/\d+$/
 
-// CSS for hiding 关联商品 on item pages — safe because .hpoi-taobao-box is
-// unambiguous there (no 待补款 ambiguity like on the homepage).
-const ITEM_TAOBAO_ID = 'bn-item-taobao'
-const ITEM_TAOBAO_CSS = `.hpoi-taobao-box { display: none !important; }`
-
 // Applied when ALL three right-column sections are blocked
 const EXPAND_ID = 'bn-layout-expand'
 const EXPAND_CSS = `
@@ -124,6 +119,32 @@ function applyShopRecommend(hide: boolean): void {
 }
 
 // ---------------------------------------------------------------------------
+// DOM-based hiding for 关联商品 on item detail pages
+// The .hpoi-taobao-box only contains the product cards; the heading "关联商品"
+// and the "更多" link sit outside it in a parent .hpoi-box container.
+// We hide the entire .hpoi-box by walking up from .hpoi-taobao-box.
+// ---------------------------------------------------------------------------
+
+let itemTaobaoBox: HTMLElement | null = null
+
+function findItemTaobaoBox(): HTMLElement | null {
+  if (itemTaobaoBox) return itemTaobaoBox
+  if (!ITEM_PAGE_RE.test(location.pathname)) return null
+  itemTaobaoBox = dq<HTMLElement>('.hpoi-taobao-box')?.closest<HTMLElement>('.hpoi-box') ?? null
+  return itemTaobaoBox
+}
+
+function applyItemRelatedProducts(hide: boolean): void {
+  const el = findItemTaobaoBox()
+  if (!el) return
+  if (hide) {
+    el.style.setProperty('display', 'none', 'important')
+  } else {
+    el.style.removeProperty('display')
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Apply / remove helpers
 // ---------------------------------------------------------------------------
 
@@ -139,12 +160,7 @@ function applyStyles(opts: Opts) {
 
   applyShopRecommend(opts.blockLeftShopRecommend)
 
-  // 关联商品 on item detail pages only
-  if (opts.blockItemRelatedProducts && ITEM_PAGE_RE.test(location.pathname)) {
-    addStyle(ITEM_TAOBAO_CSS, ITEM_TAOBAO_ID)
-  } else {
-    removeStyle(ITEM_TAOBAO_ID)
-  }
+  applyItemRelatedProducts(opts.blockItemRelatedProducts)
 
   // Expand the middle column only when the entire right column is gone
   if (opts.blockRightAdBanner && opts.blockRightRanking && opts.blockRightHotRecommend) {
@@ -157,9 +173,10 @@ function applyStyles(opts: Opts) {
 function removeAllStyles() {
   for (const rule of Object.values(CSS_RULES)) removeStyle(rule!.id)
   removeStyle(EXPAND_ID)
-  removeStyle(ITEM_TAOBAO_ID)
   applyShopRecommend(false)
+  applyItemRelatedProducts(false)
   shopBox = null
+  itemTaobaoBox = null
 }
 
 // ---------------------------------------------------------------------------

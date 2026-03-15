@@ -155,40 +155,55 @@ const ALL_OFF = {
   blockItemRelatedProducts: false,
 }
 
+/** Build a minimal DOM mimicking the item page's 关联商品 structure */
+function setupItemPageDom() {
+  const box = document.createElement('div')
+  box.className = 'hpoi-box'
+  const taobao = document.createElement('div')
+  taobao.className = 'hpoi-taobao-box row'
+  box.appendChild(taobao)
+  document.body.appendChild(box)
+  return box
+}
+
 describe('block-noise — item page (关联商品)', () => {
   beforeEach(() => {
     vi.mocked(GM_getValue).mockReturnValue(undefined)
     document.head.innerHTML = ''
+    document.body.innerHTML = ''
   })
   afterEach(() => {
     document.head.innerHTML = ''
+    document.body.innerHTML = ''
   })
 
-  it('injects taobao-box hide style on item page when enabled', async () => {
+  it('hides entire .hpoi-box container on item page when enabled', async () => {
+    const box = setupItemPageDom()
     const c = await load('https://www.hpoi.net/hobby/120928')
     await c.entry!({ options: { ...ALL_OFF, blockItemRelatedProducts: true }, enabled: true })
-    expect(styleCount('bn-item-taobao')).toBe(1)
-    const styleEl = document.head.querySelector('[data-hpoi-style="bn-item-taobao"]')
-    expect(styleEl?.textContent).toContain('.hpoi-taobao-box')
+    expect(box.style.display).toBe('none')
   })
 
-  it('does NOT inject taobao-box style on homepage even when enabled', async () => {
+  it('does NOT hide on homepage even when enabled', async () => {
+    const box = setupItemPageDom()
     const c = await load('https://www.hpoi.net/user/home')
     await c.entry!({ options: { ...ALL_OFF, blockItemRelatedProducts: true }, enabled: true })
-    expect(styleCount('bn-item-taobao')).toBe(0)
+    expect(box.style.display).not.toBe('none')
   })
 
-  it('does NOT inject taobao-box style on archive page', async () => {
+  it('does NOT hide on archive page', async () => {
+    const box = setupItemPageDom()
     const c = await load('https://www.hpoi.net/hobby/all')
     await c.entry!({ options: { ...ALL_OFF, blockItemRelatedProducts: true }, enabled: true })
-    expect(styleCount('bn-item-taobao')).toBe(0)
+    expect(box.style.display).not.toBe('none')
   })
 
-  it('removes style on unload', async () => {
+  it('restores display on unload', async () => {
+    const box = setupItemPageDom()
     const c = await load('https://www.hpoi.net/hobby/120928')
     await c.entry!({ options: { ...ALL_OFF, blockItemRelatedProducts: true }, enabled: true })
-    expect(styleCount('bn-item-taobao')).toBe(1)
+    expect(box.style.display).toBe('none')
     await c.unload!()
-    expect(styleCount('bn-item-taobao')).toBe(0)
+    expect(box.style.display).toBe('')
   })
 })
