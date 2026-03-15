@@ -51,10 +51,23 @@ src/
 │   └── loader.ts            # loadAllComponents(), enableComponent(), disableComponent()
 ├── plugins/
 │   └── types.ts             # Plugin type stubs (PluginMetadata, DataProvider, HookHandlers)
+├── ui/
+│   └── settings-panel.ts    # Floating ⚙ button + Shadow DOM settings panel
 └── features/
     ├── example/index.ts     # Minimal component validating the bootstrap pipeline
     └── block-noise/index.ts # Blocks ads and noise on homepage and hobby pages
 ```
+
+## Settings UI
+
+**File:** `src/ui/settings-panel.ts`
+**Mounted by:** `main.ts` after `loadAllComponents()` completes
+
+A floating ⚙ button (fixed bottom-right, 42 px, indigo) rendered inside a Shadow DOM host (`#hpoi-helper-settings`). Clicking opens a panel that lists all registered components with:
+- A toggle to enable/disable the component (calls `enableComponent` / `disableComponent`)
+- Per-option controls when the component is enabled: boolean → toggle switch, number → number input, string with `choices` → select, free string → text input
+
+The panel re-renders its body on every open so it always reflects persisted state. Styles are fully isolated from hpoi.net via Shadow DOM.
 
 ## Implemented Features
 
@@ -110,6 +123,7 @@ export const component = defineComponent({
 - DOM queries: `dq()` / `dqa()` for synchronous; `spinQuery()` for elements that load dynamically
 - Settings: `settings.getComponent(name, schema)` reads persisted options; `settings.onChange(path, fn)` returns an unsubscribe function — always call it in `unload`
 - Style injection: use `addStyle(css, id)` with a stable `id`; pair each `addStyle` in `entry` with `removeStyle(id)` in `unload`
+- Component registry: `registerComponents(list)` in `main.ts` populates `allComponents` in the loader before `loadAllComponents` runs; the settings panel calls `getAllComponents()` to list all components including disabled ones. `enableComponent(name)` handles both first-time loading (calls `loadComponent`) and re-enabling (calls `reload`)
 - Option values: use `false as boolean` (not `false`) in schema `defaultValue` to keep the TypeScript type as `boolean`, not the literal `false`
 - Tests: live in `tests/`, use vitest + jsdom; stub GM APIs with `vi.stubGlobal` before importing the module under test; call `vi.resetModules()` between tests that share module state
 - Plugin system: types defined in `src/plugins/types.ts`; logic not yet implemented

@@ -20,7 +20,21 @@ function buildOptions<S extends OptionsSchema>(meta: ComponentMetadata<S>): Retu
   return settings.getComponent<S>(meta.name, schema)
 }
 
+/** All registered components (loaded or not) — populated by registerComponents() */
+const allComponents = new Map<string, ComponentMetadata>()
+
+/** Currently active (entry has been called) components */
 const loadedComponents = new Map<string, ComponentMetadata>()
+
+/** Register all discovered components so the settings UI can list them */
+export function registerComponents(components: ComponentMetadata[]): void {
+  for (const meta of components) allComponents.set(meta.name, meta)
+}
+
+/** All registered components, in registration order */
+export function getAllComponents(): ComponentMetadata[] {
+  return Array.from(allComponents.values())
+}
 
 export async function loadComponent(meta: ComponentMetadata): Promise<boolean> {
   const componentSettings = buildOptions(meta)
@@ -66,11 +80,16 @@ export async function loadAllComponents(components: ComponentMetadata[]): Promis
   logger.info(`${loaded}/${components.length} components active`)
 }
 
-export function enableComponent(name: string): void {
+export async function enableComponent(name: string): Promise<void> {
   settings.set(`components.${name}.enabled`, true)
   const meta = loadedComponents.get(name)
-  if (meta?.reload) {
-    meta.reload().catch((e) => logger.error(`reload error in "${name}":`, e))
+  if (meta) {
+    // Already running — call reload hook if available
+    if (meta.reload) meta.reload().catch((e) => logger.error(`reload error in "${name}":`, e))
+  } else {
+    // Was disabled on page load — run full entry now
+    const registered = allComponents.get(name)
+    if (registered) await loadComponent(registered)
   }
 }
 
@@ -78,18 +97,8 @@ export function disableComponent(name: string): void {
   settings.set(`components.${name}.enabled`, false)
   const meta = loadedComponents.get(name)
   if (meta) {
-    // Remove instant styles
-    for (const { id } of meta.instantStyles ?? []) {
-      removeStyle(`${name}:${id}`)
-    }
-    if (meta.unload) {
-      meta.unload().catch((e) => logger.error(`unload error in "${name}":`, e))
-    }
+    for (const { id } of meta.instantStyles ?? []) removeStyle(`${name}:${id}`)
+    if (meta.unload) meta.unload().catch((e) => logger.error(`unload error in "${name}":`, e))
     loadedComponents.delete(name)
   }
-}
-
-/** Returns a snapshot of all currently loaded component metadata */
-export function getLoadedComponents(): ComponentMetadata[] {
-  return Array.from(loadedComponents.values())
 }
