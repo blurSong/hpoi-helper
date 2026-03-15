@@ -3,28 +3,35 @@ import { componentTags } from '../../components/tags'
 import { settings } from '../../core/settings'
 import { onUrlChange } from '../../core/observer'
 import { dqa } from '../../core/utils'
+import type { OptionsSchema } from '../../components/types'
 
-// Settings path for persisting the saved query string (not a user-visible option)
+// Kept stable so previously saved filter preferences are not lost
 const SAVED_QUERY_PATH = 'rememberFilter.savedQuery'
+
+// ---------------------------------------------------------------------------
+// Option schema
+// ---------------------------------------------------------------------------
+
+const schema = {
+  rememberFilter: {
+    defaultValue: true as boolean,
+    displayName: '记住资料库筛选项',
+    description: '进入资料库时自动恢复上次使用的筛选条件',
+  },
+} satisfies OptionsSchema
+
+type Opts = { [K in keyof typeof schema]: boolean }
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Main-category codes used by the site's standard nav links */
 const MAIN_CATEGORIES = new Set(['100', '200', '300', '400', '500'])
 
-/**
- * Returns true when the URL is the site's bare default archive link —
- * e.g. "?order=add&category=100".  We skip saving these to avoid
- * overwriting real preferences when the user arrives via a default link.
- */
 function isDefaultArchiveUrl(search: string): boolean {
   if (!search || search === '?') return true
   const params = new URLSearchParams(search.replace(/^\?/, ''))
-  // Ignore empty / "undefined" values injected by the page's JS
   const meaningful = [...params.entries()].filter(([, v]) => v !== '' && v !== 'undefined')
-  // Default = exactly {order: "add", category: <main category>}, nothing else
   return (
     meaningful.length === 2 &&
     params.get('order') === 'add' &&
@@ -32,23 +39,13 @@ function isDefaultArchiveUrl(search: string): boolean {
   )
 }
 
-/** Persist the current archive page's query string if it looks like a real filter */
 function maybeSave(): void {
   if (isDefaultArchiveUrl(location.search)) return
   settings.set(SAVED_QUERY_PATH, location.search)
 }
 
-/**
- * Map of patched anchors → their original href before we rewrote them.
- * Used by restoreLinks() to undo changes on unload.
- */
 const patchedLinks = new Map<HTMLAnchorElement, string>()
 
-/**
- * Find every <a> linking to the hobby archive and rewrite its href
- * so it points to the user's saved filters instead of the default.
- * Stores the original href so it can be restored later.
- */
 function patchLinks(): void {
   const saved = settings.get<string>(SAVED_QUERY_PATH)
   if (!saved) return
@@ -58,8 +55,6 @@ function patchLinks(): void {
       const raw = a.getAttribute('href') ?? ''
       const u = new URL(raw, location.origin)
       if (!u.pathname.endsWith('/hobby/all')) continue
-
-      // Only store the original once per element
       if (!patchedLinks.has(a)) patchedLinks.set(a, raw)
       a.setAttribute('href', u.pathname + saved)
     } catch {
@@ -68,11 +63,8 @@ function patchLinks(): void {
   }
 }
 
-/** Restore every patched anchor to its original href */
 function restoreLinks(): void {
-  for (const [a, original] of patchedLinks) {
-    a.setAttribute('href', original)
-  }
+  for (const [a, original] of patchedLinks) a.setAttribute('href', original)
   patchedLinks.clear()
 }
 
@@ -83,32 +75,39 @@ function restoreLinks(): void {
 let cleanups: Array<() => void> = []
 
 export const component = defineComponent({
-  name: 'rememberFilter',
-  displayName: '记住资料库筛选项',
-  description: '进入资料库时自动恢复上次使用的筛选条件',
+  name: 'customBrowse',
+  displayName: '自定义浏览',
+  description: '自定义资料库的浏览行为',
   tags: [componentTags.utility],
   enabledByDefault: true,
 
-  entry: () => {
+  options: schema,
+
+  entry: ({ options }) => {
+    const opts = options as Opts
     const onArchivePage = /\/hobby\/all\b/.test(location.pathname)
 
-    // ── On the archive page: save filter state ──────────────────────────────
-    if (onArchivePage) {
-      maybeSave()
-
-      // Also catch pushState-based URL changes (in case hpoi ever goes SPA)
-      cleanups.push(
-        onUrlChange((url) => {
-          if (/\/hobby\/all\b/.test(new URL(url).pathname)) maybeSave()
-        }),
-      )
+    if (opts.rememberFilter) {
+      if (onArchivePage) {
+        maybeSave()
+        cleanups.push(
+          onUrlChange((url) => {
+            if (/\/hobby\/all\b/.test(new URL(url).pathname)) maybeSave()
+          }),
+        )
+      }
+      patchLinks()
+      cleanups.push(onUrlChange(() => patchLinks()))
     }
 
-    // ── On every page: rewrite archive entry links ───────────────────────────
-    patchLinks()
-
-    // Re-patch after any URL change (covers SPA navigation adding new links)
-    cleanups.push(onUrlChange(() => patchLinks()))
+    // Re-apply when option is toggled in the settings panel
+    cleanups.push(
+      settings.onChange('components.customBrowse.options.rememberFilter', () => {
+        const { options: current } = settings.getComponent<typeof schema>('customBrowse', schema)
+        restoreLinks()
+        if ((current as Opts).rememberFilter) patchLinks()
+      }),
+    )
   },
 
   unload: () => {
