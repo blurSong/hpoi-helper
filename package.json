@@ -1,0 +1,51 @@
+{
+  "name": "hpoi-helper",
+  "version": "0.1.0",
+  "description": "Enhancements for hpoi.net",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint src --ext .ts --fix",
+    "lint:check": "eslint src --ext .ts",
+    "format": "prettier --write src",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "check-all": "pnpm type-check && pnpm lint:check && pnpm test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@10.32.1",
+  "vitest": {
+    "environment": "jsdom",
+    "include": [
+      "tests/**/*.test.ts"
+    ],
+    "coverage": {
+      "provider": "v8",
+      "include": [
+        "src/**/*.ts"
+      ],
+      "thresholds": {
+        "lines": 80
+      }
+    }
+  },
+  "devDependencies": {
+    "@types/tampermonkey": "^5.0.5",
+    "@typescript-eslint/eslint-plugin": "^8.57.0",
+    "@typescript-eslint/parser": "^8.57.0",
+    "@vitest/coverage-v8": "^4.1.0",
+    "@vitest/ui": "^4.1.0",
+    "eslint": "^10.0.3",
+    "eslint-config-prettier": "^10.1.8",
+    "jsdom": "^28.1.0",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.0",
+    "vite-plugin-monkey": "^7.1.9",
+    "vitest": "^4.1.0"
+  }
+}
