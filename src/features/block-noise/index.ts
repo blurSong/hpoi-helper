@@ -63,7 +63,9 @@ const RULES: Record<keyof Opts, { id: string; css: string }> = {
   },
   blockLeftShopRecommend: {
     id: 'bn-left-shop',
-    css: `.hpoi-home-box-lt:not(.top-praise) { display: none !important; }`,
+    // Use :has(.hpoi-taobao-box) to target only the 商品推荐 box.
+    // Other .hpoi-home-box-lt sections (关注动态, 待补款) do NOT contain .hpoi-taobao-box.
+    css: `.hpoi-home-box-lt:has(.hpoi-taobao-box) { display: none !important; }`,
   },
   blockLeftPraiseRanking: {
     id: 'bn-left-praise',
