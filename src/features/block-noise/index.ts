@@ -45,6 +45,11 @@ const schema = {
     displayName: '【条目页】屏蔽关联商品',
     description: '隐藏条目详情页底部的淘宝关联商品推荐区',
   },
+  blockCharRelatedProducts: {
+    defaultValue: false as boolean,
+    displayName: '【角色页】屏蔽相关商品',
+    description: '隐藏角色详情页底部的相关商品推荐区',
+  },
 } satisfies OptionsSchema
 
 type Opts = { [K in keyof typeof schema]: boolean }
@@ -81,6 +86,9 @@ const CSS_RULES: Partial<Record<keyof Opts, { id: string; css: string }>> = {
 
 // Item detail pages: /hobby/<digits> (NOT /hobby/all, /hobby/push, etc.)
 const ITEM_PAGE_RE = /\/hobby\/\d+$/
+
+// Character pages: /charactar/<digits>
+const CHAR_PAGE_RE = /\/charactar\/\d+$/
 
 // Applied when ALL three right-column sections are blocked
 const EXPAND_ID = 'bn-layout-expand'
@@ -145,6 +153,30 @@ function applyItemRelatedProducts(hide: boolean): void {
 }
 
 // ---------------------------------------------------------------------------
+// DOM-based hiding for 相关商品 on character pages
+// Same structure as item page: .hpoi-taobao-box inside .hpoi-box
+// ---------------------------------------------------------------------------
+
+let charTaobaoBox: HTMLElement | null = null
+
+function findCharTaobaoBox(): HTMLElement | null {
+  if (charTaobaoBox) return charTaobaoBox
+  if (!CHAR_PAGE_RE.test(location.pathname)) return null
+  charTaobaoBox = dq<HTMLElement>('.hpoi-taobao-box')?.closest<HTMLElement>('.hpoi-box') ?? null
+  return charTaobaoBox
+}
+
+function applyCharRelatedProducts(hide: boolean): void {
+  const el = findCharTaobaoBox()
+  if (!el) return
+  if (hide) {
+    el.style.setProperty('display', 'none', 'important')
+  } else {
+    el.style.removeProperty('display')
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Apply / remove helpers
 // ---------------------------------------------------------------------------
 
@@ -162,6 +194,8 @@ function applyStyles(opts: Opts) {
 
   applyItemRelatedProducts(opts.blockItemRelatedProducts)
 
+  applyCharRelatedProducts(opts.blockCharRelatedProducts)
+
   // Expand the middle column only when the entire right column is gone
   if (opts.blockRightAdBanner && opts.blockRightRanking && opts.blockRightHotRecommend) {
     addStyle(EXPAND_CSS, EXPAND_ID)
@@ -175,8 +209,10 @@ function removeAllStyles() {
   removeStyle(EXPAND_ID)
   applyShopRecommend(false)
   applyItemRelatedProducts(false)
+  applyCharRelatedProducts(false)
   shopBox = null
   itemTaobaoBox = null
+  charTaobaoBox = null
 }
 
 // ---------------------------------------------------------------------------
@@ -197,7 +233,7 @@ export const component = defineComponent({
   enabledByDefault: true,
   alwaysOn: true,
 
-  urlInclude: [/hpoi\.net\/(index)?$/, /hpoi\.net\/user\/home/, /hpoi\.net\/hobby/],
+  urlInclude: [/hpoi\.net\/(index)?$/, /hpoi\.net\/user\/home/, /hpoi\.net\/hobby/, /hpoi\.net\/charactar/],
 
   options: schema,
 
