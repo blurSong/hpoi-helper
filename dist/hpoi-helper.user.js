@@ -261,7 +261,7 @@ var shopBox = null;
 	function findCharTaobaoBox() {
 		if (charTaobaoBox) return charTaobaoBox;
 		if (!CHAR_PAGE_RE.test(location.pathname)) return null;
-		charTaobaoBox = dq(".hpoi-taobao-box")?.closest(".hpoi-box") ?? null;
+		charTaobaoBox = dq(".taobao-relate-swiper")?.closest(".charactar-ibox") ?? null;
 		return charTaobaoBox;
 	}
 	function applyCharRelatedProducts(hide) {

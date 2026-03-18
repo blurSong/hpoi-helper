@@ -154,7 +154,8 @@ function applyItemRelatedProducts(hide: boolean): void {
 
 // ---------------------------------------------------------------------------
 // DOM-based hiding for 相关商品 on character pages
-// Same structure as item page: .hpoi-taobao-box inside .hpoi-box
+// Structure: .taobao-relate-swiper inside .charactar-ibox
+// (different from item pages which use .hpoi-taobao-box inside .hpoi-box)
 // ---------------------------------------------------------------------------
 
 let charTaobaoBox: HTMLElement | null = null
@@ -162,7 +163,8 @@ let charTaobaoBox: HTMLElement | null = null
 function findCharTaobaoBox(): HTMLElement | null {
   if (charTaobaoBox) return charTaobaoBox
   if (!CHAR_PAGE_RE.test(location.pathname)) return null
-  charTaobaoBox = dq<HTMLElement>('.hpoi-taobao-box')?.closest<HTMLElement>('.hpoi-box') ?? null
+  charTaobaoBox =
+    dq<HTMLElement>('.taobao-relate-swiper')?.closest<HTMLElement>('.charactar-ibox') ?? null
   return charTaobaoBox
 }
 

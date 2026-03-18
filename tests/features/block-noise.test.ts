@@ -163,13 +163,27 @@ const ALL_OFF = {
   blockCharRelatedProducts: false,
 }
 
-/** Build a minimal DOM mimicking the 关联/相关商品 structure (shared by item and char pages) */
+/** Build a minimal DOM mimicking the item page's 关联商品 structure */
 function setupTaobaoBoxDom() {
   const box = document.createElement('div')
   box.className = 'hpoi-box'
   const taobao = document.createElement('div')
   taobao.className = 'hpoi-taobao-box row'
   box.appendChild(taobao)
+  document.body.appendChild(box)
+  return box
+}
+
+/** Build a minimal DOM mimicking the character page's 相关商品 structure */
+function setupCharPageDom() {
+  const box = document.createElement('div')
+  box.className = 'charactar-ibox'
+  const body = document.createElement('div')
+  body.className = 'charactar-ibox-body'
+  const swiper = document.createElement('div')
+  swiper.className = 'swiper-container taobao-relate-swiper'
+  body.appendChild(swiper)
+  box.appendChild(body)
   document.body.appendChild(box)
   return box
 }
@@ -227,29 +241,29 @@ describe('block-noise — character page (相关商品)', () => {
     document.body.innerHTML = ''
   })
 
-  it('hides entire .hpoi-box container on character page when enabled', async () => {
-    const box = setupTaobaoBoxDom()
+  it('hides entire .charactar-ibox container on character page when enabled', async () => {
+    const box = setupCharPageDom()
     const c = await load('https://www.hpoi.net/charactar/262')
     await c.entry!({ options: { ...ALL_OFF, blockCharRelatedProducts: true }, enabled: true })
     expect(box.style.display).toBe('none')
   })
 
   it('does NOT hide on homepage even when enabled', async () => {
-    const box = setupTaobaoBoxDom()
+    const box = setupCharPageDom()
     const c = await load('https://www.hpoi.net/user/home')
     await c.entry!({ options: { ...ALL_OFF, blockCharRelatedProducts: true }, enabled: true })
     expect(box.style.display).not.toBe('none')
   })
 
   it('does NOT hide on item page', async () => {
-    const box = setupTaobaoBoxDom()
+    const box = setupCharPageDom()
     const c = await load('https://www.hpoi.net/hobby/120928')
     await c.entry!({ options: { ...ALL_OFF, blockCharRelatedProducts: true }, enabled: true })
     expect(box.style.display).not.toBe('none')
   })
 
   it('restores display on unload', async () => {
-    const box = setupTaobaoBoxDom()
+    const box = setupCharPageDom()
     const c = await load('https://www.hpoi.net/charactar/262')
     await c.entry!({ options: { ...ALL_OFF, blockCharRelatedProducts: true }, enabled: true })
     expect(box.style.display).toBe('none')
