@@ -278,7 +278,11 @@ var shopBox = null;
 		tags: [componentTags.display],
 		enabledByDefault: true,
 		alwaysOn: true,
-		urlInclude: [/hpoi\.net\/user\/home/, /hpoi\.net\/hobby/],
+		urlInclude: [
+			/hpoi\.net\/(index)?$/,
+			/hpoi\.net\/user\/home/,
+			/hpoi\.net\/hobby/
+		],
 		options: schema$1,
 		entry: ({ options }) => {
 			applyStyles(options);
