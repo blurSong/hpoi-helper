@@ -159,7 +159,7 @@ var matchCurrentUrl = (patterns) => {
 	var schema$1 = {
 		blockRightAdBanner: {
 			defaultValue: false,
-			displayName: "【首页】屏蔽右栏广告 banner",
+			displayName: "【首页】屏蔽右栏广告区",
 			description: "隐藏右栏的广告轮播及快捷入口图片（相册/论坛/二手专区按钮）"
 		},
 		blockRightRanking: {
@@ -315,7 +315,7 @@ function createDomHider(finder) {
 	var component$1 = defineComponent({
 		name: "blockNoise",
 		displayName: "屏蔽广告内容",
-		description: "屏蔽hpoi各处的广告、推荐、排行榜",
+		description: "屏蔽hpoi各处的广告、推荐、排行榜等",
 		tags: [componentTags.display],
 		enabledByDefault: true,
 		alwaysOn: true,
