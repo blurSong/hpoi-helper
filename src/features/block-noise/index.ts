@@ -87,6 +87,10 @@ const CSS_RULES: Partial<Record<keyof Opts, { id: string; css: string }>> = {
     id: 'bn-hobby-top',
     css: `.hpoi-topcarousel-box { display: none !important; }`,
   },
+  blockCompanyOfficialMerch: {
+    id: 'bn-company-shop',
+    css: `.company-container-shop-hobby { display: none !important; }`,
+  },
 }
 
 // Item detail pages: /hobby/<digits> (NOT /hobby/all, /hobby/push, etc.)
@@ -94,9 +98,6 @@ const ITEM_PAGE_RE = /\/hobby\/\d+$/
 
 // Character pages: /charactar/<digits>
 const CHAR_PAGE_RE = /\/charactar\/\d+$/
-
-// Company pages: /company/<digits>
-const COMPANY_PAGE_RE = /\/company\/\d+$/
 
 // Applied when ALL three right-column sections are blocked
 const EXPAND_ID = 'bn-layout-expand'
@@ -187,31 +188,6 @@ function applyCharRelatedProducts(hide: boolean): void {
 }
 
 // ---------------------------------------------------------------------------
-// DOM-based hiding for 自营周边 on company pages
-// Structure: .hpoi-taobao-box inside .hpoi-box (same pattern as item pages,
-// but scoped to /company/<digits> via COMPANY_PAGE_RE)
-// ---------------------------------------------------------------------------
-
-let companyTaobaoBox: HTMLElement | null = null
-
-function findCompanyTaobaoBox(): HTMLElement | null {
-  if (companyTaobaoBox) return companyTaobaoBox
-  if (!COMPANY_PAGE_RE.test(location.pathname)) return null
-  companyTaobaoBox = dq<HTMLElement>('.hpoi-taobao-box')?.closest<HTMLElement>('.hpoi-box') ?? null
-  return companyTaobaoBox
-}
-
-function applyCompanyOfficialMerch(hide: boolean): void {
-  const el = findCompanyTaobaoBox()
-  if (!el) return
-  if (hide) {
-    el.style.setProperty('display', 'none', 'important')
-  } else {
-    el.style.removeProperty('display')
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Apply / remove helpers
 // ---------------------------------------------------------------------------
 
@@ -231,8 +207,6 @@ function applyStyles(opts: Opts) {
 
   applyCharRelatedProducts(opts.blockCharRelatedProducts)
 
-  applyCompanyOfficialMerch(opts.blockCompanyOfficialMerch)
-
   // Expand the middle column only when the entire right column is gone
   if (opts.blockRightAdBanner && opts.blockRightRanking && opts.blockRightHotRecommend) {
     addStyle(EXPAND_CSS, EXPAND_ID)
@@ -247,11 +221,9 @@ function removeAllStyles() {
   applyShopRecommend(false)
   applyItemRelatedProducts(false)
   applyCharRelatedProducts(false)
-  applyCompanyOfficialMerch(false)
   shopBox = null
   itemTaobaoBox = null
   charTaobaoBox = null
-  companyTaobaoBox = null
 }
 
 // ---------------------------------------------------------------------------

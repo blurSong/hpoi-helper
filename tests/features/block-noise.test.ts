@@ -280,55 +280,34 @@ describe('block-noise — character page (相关商品)', () => {
   })
 })
 
-/** Build a minimal DOM mimicking the company page's 自营周边 structure */
-function setupCompanyPageDom() {
-  const box = document.createElement('div')
-  box.className = 'hpoi-box'
-  const taobao = document.createElement('div')
-  taobao.className = 'hpoi-taobao-box row'
-  box.appendChild(taobao)
-  document.body.appendChild(box)
-  return box
-}
-
 describe('block-noise — company page (自营周边)', () => {
   beforeEach(() => {
     vi.mocked(GM_getValue).mockReturnValue(undefined)
     document.head.innerHTML = ''
-    document.body.innerHTML = ''
   })
   afterEach(() => {
     document.head.innerHTML = ''
-    document.body.innerHTML = ''
   })
 
-  it('hides entire .hpoi-box container on company page when enabled', async () => {
-    const box = setupCompanyPageDom()
+  it('injects CSS for .company-container-shop-hobby when enabled', async () => {
     const c = await load('https://www.hpoi.net/company/259')
     await c.entry!({ options: { ...ALL_OFF, blockCompanyOfficialMerch: true }, enabled: true })
-    expect(box.style.display).toBe('none')
+    expect(styleCount('bn-company-shop')).toBe(1)
+    const styleEl = document.head.querySelector('[data-hpoi-style="bn-company-shop"]')
+    expect(styleEl?.textContent).toContain('.company-container-shop-hobby')
   })
 
-  it('does NOT hide on homepage even when enabled', async () => {
-    const box = setupCompanyPageDom()
-    const c = await load('https://www.hpoi.net/user/home')
-    await c.entry!({ options: { ...ALL_OFF, blockCompanyOfficialMerch: true }, enabled: true })
-    expect(box.style.display).not.toBe('none')
+  it('does not inject CSS when disabled', async () => {
+    const c = await load('https://www.hpoi.net/company/259')
+    await c.entry!({ options: { ...ALL_OFF, blockCompanyOfficialMerch: false }, enabled: true })
+    expect(styleCount('bn-company-shop')).toBe(0)
   })
 
-  it('does NOT hide on item page', async () => {
-    const box = setupCompanyPageDom()
-    const c = await load('https://www.hpoi.net/hobby/120928')
-    await c.entry!({ options: { ...ALL_OFF, blockCompanyOfficialMerch: true }, enabled: true })
-    expect(box.style.display).not.toBe('none')
-  })
-
-  it('restores display on unload', async () => {
-    const box = setupCompanyPageDom()
+  it('removes CSS on unload', async () => {
     const c = await load('https://www.hpoi.net/company/259')
     await c.entry!({ options: { ...ALL_OFF, blockCompanyOfficialMerch: true }, enabled: true })
-    expect(box.style.display).toBe('none')
+    expect(styleCount('bn-company-shop')).toBe(1)
     await c.unload!()
-    expect(box.style.display).toBe('')
+    expect(styleCount('bn-company-shop')).toBe(0)
   })
 })
