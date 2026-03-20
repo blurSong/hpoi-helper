@@ -76,7 +76,11 @@ When all three right-column options are true, middle feed expands from 50% → 7
 
 **File:** `src/features/custom-browse/index.ts`  |  **Pages:** all  |  `alwaysOn: true`
 
-One option `rememberFilter` (default `true`): saves the archive query string at `rememberFilter.savedQuery` when user is on `/hobby/all` with non-default filters. On all pages, rewrites `a[href*="hobby/all"]` links. Restores original hrefs on unload.
+Two boolean options (both default `false`). When on `/hobby/all`, checks URL params and calls `location.replace()` to add missing ones — a single redirect per visit, idempotent (no redirect if params already correct):
+- `unlockR18`: ensures `r18=-1` is present
+- `femaleOnly`: ensures `sex=0` is present
+
+Also re-applies on SPA navigation (`onUrlChange`) and when options are toggled in the settings panel (`settings.onChange`).
 
 ## Adding a Feature Component
 

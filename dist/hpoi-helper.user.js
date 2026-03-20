@@ -151,7 +151,6 @@ function setPath(obj, path, value) {
 		}
 	};
 var dq = (selector, root = document) => root.querySelector(selector);
-var dqa = (selector, root = document) => Array.from(root.querySelectorAll(selector));
 var matchCurrentUrl = (patterns) => {
 		const url = location.href;
 		return patterns.some((p) => typeof p === "string" ? url.includes(p) : p.test(url));
@@ -374,43 +373,36 @@ function onUrlChange(callback) {
 		};
 	}
 	var custom_browse_exports = __exportAll({ component: () => component });
-	var SAVED_QUERY_PATH = "rememberFilter.savedQuery";
-	var schema = { rememberFilter: {
-		defaultValue: true,
-		displayName: "记住资料库筛选项",
-		description: "进入资料库时自动恢复上次使用的筛选条件"
-	} };
-	var MAIN_CATEGORIES = new Set([
-		"100",
-		"200",
-		"300",
-		"400",
-		"500"
-	]);
-	function isDefaultArchiveUrl(search) {
-		if (!search || search === "?") return true;
-		const params = new URLSearchParams(search.replace(/^\?/, ""));
-		return [...params.entries()].filter(([, v]) => v !== "" && v !== "undefined").length === 2 && params.get("order") === "add" && MAIN_CATEGORIES.has(params.get("category") ?? "");
+	var schema = {
+		unlockR18: {
+			defaultValue: false,
+			displayName: "不限年龄",
+			description: "进入资料库时自动添加 r18=-1，显示所有年龄段商品"
+		},
+		femaleOnly: {
+			defaultValue: false,
+			displayName: "只看妹子",
+			description: "进入资料库时自动添加 sex=0，只显示女性角色商品"
+		}
+	};
+	var ARCHIVE_RE = /^\/hobby\/all/;
+	function applyArchiveParams(opts) {
+		if (!ARCHIVE_RE.test(location.pathname)) return;
+		const params = new URLSearchParams(location.search);
+		let changed = false;
+		if (opts.unlockR18 && params.get("r18") !== "-1") {
+			params.set("r18", "-1");
+			changed = true;
+		}
+		if (opts.femaleOnly && params.get("sex") !== "0") {
+			params.set("sex", "0");
+			changed = true;
+		}
+		if (changed) location.replace(`${location.pathname}?${params.toString()}`);
 	}
-	function maybeSave() {
-		if (isDefaultArchiveUrl(location.search)) return;
-		settings.set(SAVED_QUERY_PATH, location.search);
-	}
-	var patchedLinks = new Map();
-	function patchLinks() {
-		const saved = settings.get(SAVED_QUERY_PATH);
-		if (!saved) return;
-		for (const a of dqa("a[href*=\"hobby/all\"]")) try {
-			const raw = a.getAttribute("href") ?? "";
-			const u = new URL(raw, location.origin);
-			if (!u.pathname.endsWith("/hobby/all")) continue;
-			if (!patchedLinks.has(a)) patchedLinks.set(a, raw);
-			a.setAttribute("href", u.pathname + saved);
-		} catch {}
-	}
-	function restoreLinks() {
-		for (const [a, original] of patchedLinks) a.setAttribute("href", original);
-		patchedLinks.clear();
+	function getCurrentOpts() {
+		const { options } = settings.getComponent("customBrowse", schema);
+		return options;
 	}
 	var cleanups = [];
 	var component = defineComponent({
@@ -422,26 +414,10 @@ function onUrlChange(callback) {
 		alwaysOn: true,
 		options: schema,
 		entry: ({ options }) => {
-			const opts = options;
-			const onArchivePage = /\/hobby\/all\b/.test(location.pathname);
-			if (opts.rememberFilter) {
-				if (onArchivePage) {
-					maybeSave();
-					cleanups.push(onUrlChange((url) => {
-						if (/\/hobby\/all\b/.test(new URL(url).pathname)) maybeSave();
-					}));
-				}
-				patchLinks();
-				cleanups.push(onUrlChange(() => patchLinks()));
-			}
-			cleanups.push(settings.onChange("components.customBrowse.options.rememberFilter", () => {
-				const { options: current } = settings.getComponent("customBrowse", schema);
-				restoreLinks();
-				if (current.rememberFilter) patchLinks();
-			}));
+			applyArchiveParams(options);
+			cleanups.push(onUrlChange(() => applyArchiveParams(getCurrentOpts())), ...Object.keys(schema).map((key) => settings.onChange(`components.customBrowse.options.${key}`, () => applyArchiveParams(getCurrentOpts()))));
 		},
 		unload: () => {
-			restoreLinks();
 			for (const fn of cleanups) fn();
 			cleanups = [];
 		}

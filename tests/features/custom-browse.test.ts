@@ -4,129 +4,127 @@ vi.stubGlobal('GM_getValue', vi.fn(() => undefined))
 vi.stubGlobal('GM_setValue', vi.fn())
 vi.stubGlobal('GM_deleteValue', vi.fn())
 
-const OPTS_ON  = { rememberFilter: true }
-const OPTS_OFF = { rememberFilter: false }
+const replaceFn = vi.fn()
 
-const load = async (href: string, opts = OPTS_ON) => {
-  vi.resetModules()
-  vi.mocked(GM_getValue).mockReturnValue(undefined)
+function stubLocation(href: string) {
+  const u = new URL(href)
   vi.stubGlobal('location', {
     href,
-    pathname: new URL(href).pathname,
-    search:   new URL(href).search,
-    origin:   new URL(href).origin,
+    pathname: u.pathname,
+    search: u.search,
+    origin: u.origin,
+    replace: replaceFn,
   })
-  const { component } = await import('../../src/features/custom-browse')
-  return { run: () => component.entry!({ options: opts, enabled: true }), component }
 }
 
+async function load(href: string) {
+  vi.resetModules()
+  stubLocation(href)
+  const { component } = await import('../../src/features/custom-browse')
+  return component
+}
+
+const ALL_OFF = { unlockR18: false, femaleOnly: false }
+
 // ---------------------------------------------------------------------------
-// Save logic
+// unlockR18
 // ---------------------------------------------------------------------------
 
-describe('rememberFilter — save logic', () => {
-  beforeEach(() => vi.mocked(GM_setValue).mockClear())
+describe('unlockR18', () => {
+  beforeEach(() => replaceFn.mockClear())
 
-  it('does NOT save bare default URL', async () => {
-    const { run } = await load('https://www.hpoi.net/hobby/all?order=add&category=100')
-    await run()
-    expect(vi.mocked(GM_setValue)).not.toHaveBeenCalled()
+  it('redirects to add r18=-1 when missing', async () => {
+    const c = await load('https://www.hpoi.net/hobby/all?order=add&category=100')
+    await c.entry!({ options: { ...ALL_OFF, unlockR18: true }, enabled: true })
+    expect(replaceFn).toHaveBeenCalledOnce()
+    const url = new URL(replaceFn.mock.calls[0][0], 'https://www.hpoi.net')
+    expect(url.searchParams.get('r18')).toBe('-1')
   })
 
-  it('saves URL with real user filters', async () => {
-    const { run } = await load('https://www.hpoi.net/hobby/all?order=hits&sex=0&r18=199&category=1')
-    await run()
-    expect(vi.mocked(GM_setValue)).toHaveBeenCalled()
+  it('preserves existing query params on redirect', async () => {
+    const c = await load('https://www.hpoi.net/hobby/all?order=hits&category=1')
+    await c.entry!({ options: { ...ALL_OFF, unlockR18: true }, enabled: true })
+    const url = new URL(replaceFn.mock.calls[0][0], 'https://www.hpoi.net')
+    expect(url.searchParams.get('order')).toBe('hits')
+    expect(url.searchParams.get('category')).toBe('1')
+    expect(url.searchParams.get('r18')).toBe('-1')
   })
 
-  it('saves sub-category change (category=1 is a user choice)', async () => {
-    const { run } = await load('https://www.hpoi.net/hobby/all?order=add&category=1')
-    await run()
-    expect(vi.mocked(GM_setValue)).toHaveBeenCalled()
+  it('does NOT redirect when r18=-1 already set', async () => {
+    const c = await load('https://www.hpoi.net/hobby/all?order=add&category=100&r18=-1')
+    await c.entry!({ options: { ...ALL_OFF, unlockR18: true }, enabled: true })
+    expect(replaceFn).not.toHaveBeenCalled()
   })
 
-  it('treats empty/undefined params as default', async () => {
-    const { run } = await load('https://www.hpoi.net/hobby/all?order=add&category=100&workers=&state=undefined')
-    await run()
-    expect(vi.mocked(GM_setValue)).not.toHaveBeenCalled()
+  it('does NOT redirect when option is off', async () => {
+    const c = await load('https://www.hpoi.net/hobby/all?order=add&category=100')
+    await c.entry!({ options: ALL_OFF, enabled: true })
+    expect(replaceFn).not.toHaveBeenCalled()
   })
 
-  it('does nothing when rememberFilter option is off', async () => {
-    const { run } = await load('https://www.hpoi.net/hobby/all?order=hits&category=1', OPTS_OFF)
-    await run()
-    expect(vi.mocked(GM_setValue)).not.toHaveBeenCalled()
+  it('does NOT redirect on non-archive pages', async () => {
+    const c = await load('https://www.hpoi.net/user/home')
+    await c.entry!({ options: { ...ALL_OFF, unlockR18: true }, enabled: true })
+    expect(replaceFn).not.toHaveBeenCalled()
   })
 })
 
 // ---------------------------------------------------------------------------
-// Link patching & restoration
+// femaleOnly
 // ---------------------------------------------------------------------------
 
-describe('rememberFilter — link patching', () => {
-  beforeEach(() => { document.body.innerHTML = '' })
+describe('femaleOnly', () => {
+  beforeEach(() => replaceFn.mockClear())
 
-  it('patches archive links with saved query', async () => {
-    const SAVED = '?order=hits&sex=0&r18=199&category=1'
-
-    vi.resetModules()
-    vi.mocked(GM_getValue).mockReturnValue(undefined)
-    vi.stubGlobal('location', {
-      href: 'https://www.hpoi.net/hobby/', pathname: '/hobby/', search: '', origin: 'https://www.hpoi.net',
-    })
-
-    const { settings } = await import('../../src/core/settings')
-    const { component } = await import('../../src/features/custom-browse')
-    settings.set('rememberFilter.savedQuery', SAVED)
-
-    const link = document.createElement('a')
-    link.setAttribute('href', '/hobby/all?order=add&category=100')
-    document.body.appendChild(link)
-
-    await component.entry!({ options: OPTS_ON, enabled: true })
-    expect(link.getAttribute('href')).toBe('/hobby/all' + SAVED)
+  it('redirects to add sex=0 when missing', async () => {
+    const c = await load('https://www.hpoi.net/hobby/all?order=add&category=100')
+    await c.entry!({ options: { ...ALL_OFF, femaleOnly: true }, enabled: true })
+    expect(replaceFn).toHaveBeenCalledOnce()
+    const url = new URL(replaceFn.mock.calls[0][0], 'https://www.hpoi.net')
+    expect(url.searchParams.get('sex')).toBe('0')
   })
 
-  it('leaves links unchanged when option is off', async () => {
-    vi.resetModules()
-    vi.mocked(GM_getValue).mockReturnValue(undefined)
-    vi.stubGlobal('location', {
-      href: 'https://www.hpoi.net/hobby/', pathname: '/hobby/', search: '', origin: 'https://www.hpoi.net',
-    })
-
-    const { settings } = await import('../../src/core/settings')
-    const { component } = await import('../../src/features/custom-browse')
-    settings.set('rememberFilter.savedQuery', '?order=hits&category=1')
-
-    const link = document.createElement('a')
-    link.setAttribute('href', '/hobby/all?order=add&category=100')
-    document.body.appendChild(link)
-
-    await component.entry!({ options: OPTS_OFF, enabled: true })
-    expect(link.getAttribute('href')).toBe('/hobby/all?order=add&category=100')
+  it('does NOT redirect when sex=0 already set', async () => {
+    const c = await load('https://www.hpoi.net/hobby/all?order=add&category=100&sex=0')
+    await c.entry!({ options: { ...ALL_OFF, femaleOnly: true }, enabled: true })
+    expect(replaceFn).not.toHaveBeenCalled()
   })
 
-  it('restores original href on unload', async () => {
-    const SAVED    = '?order=hits&sex=0&r18=199&category=1'
-    const ORIGINAL = '/hobby/all?order=add&category=100'
+  it('does NOT redirect when option is off', async () => {
+    const c = await load('https://www.hpoi.net/hobby/all?order=add&category=100')
+    await c.entry!({ options: ALL_OFF, enabled: true })
+    expect(replaceFn).not.toHaveBeenCalled()
+  })
+})
 
-    vi.resetModules()
-    vi.mocked(GM_getValue).mockReturnValue(undefined)
-    vi.stubGlobal('location', {
-      href: 'https://www.hpoi.net/hobby/', pathname: '/hobby/', search: '', origin: 'https://www.hpoi.net',
-    })
+// ---------------------------------------------------------------------------
+// both options together
+// ---------------------------------------------------------------------------
 
-    const { settings } = await import('../../src/core/settings')
-    const { component } = await import('../../src/features/custom-browse')
-    settings.set('rememberFilter.savedQuery', SAVED)
+describe('unlockR18 + femaleOnly together', () => {
+  beforeEach(() => replaceFn.mockClear())
 
-    const link = document.createElement('a')
-    link.setAttribute('href', ORIGINAL)
-    document.body.appendChild(link)
+  it('adds both params in a single redirect', async () => {
+    const c = await load('https://www.hpoi.net/hobby/all?order=add&category=100')
+    await c.entry!({ options: { unlockR18: true, femaleOnly: true }, enabled: true })
+    expect(replaceFn).toHaveBeenCalledOnce()
+    const url = new URL(replaceFn.mock.calls[0][0], 'https://www.hpoi.net')
+    expect(url.searchParams.get('r18')).toBe('-1')
+    expect(url.searchParams.get('sex')).toBe('0')
+  })
 
-    await component.entry!({ options: OPTS_ON, enabled: true })
-    expect(link.getAttribute('href')).toBe('/hobby/all' + SAVED)
+  it('does NOT redirect when both params already set', async () => {
+    const c = await load('https://www.hpoi.net/hobby/all?order=add&category=100&r18=-1&sex=0')
+    await c.entry!({ options: { unlockR18: true, femaleOnly: true }, enabled: true })
+    expect(replaceFn).not.toHaveBeenCalled()
+  })
 
-    await component.unload!()
-    expect(link.getAttribute('href')).toBe(ORIGINAL)
+  it('redirects once when only one param is missing', async () => {
+    const c = await load('https://www.hpoi.net/hobby/all?order=add&category=100&r18=-1')
+    await c.entry!({ options: { unlockR18: true, femaleOnly: true }, enabled: true })
+    expect(replaceFn).toHaveBeenCalledOnce()
+    const url = new URL(replaceFn.mock.calls[0][0], 'https://www.hpoi.net')
+    expect(url.searchParams.get('r18')).toBe('-1')
+    expect(url.searchParams.get('sex')).toBe('0')
   })
 })
