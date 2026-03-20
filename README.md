@@ -14,13 +14,15 @@ git clone <repo-url> && cd hpoi-helper
 pnpm install && pnpm build
 ```
 
-构建产物位于 `dist/hpoi-helper.user.js`，在 Tampermonkey 管理面板中选择「从文件安装」导入。
+构建产物位于 `dist/hpoi-helper.user.js`，
 
 ## 使用
 
 安装后访问 hpoi.net 的任意页面，右下角会出现一个 **⚙** 悬浮按钮。
 
 点击按钮打开设置面板，即可启用各项功能并调整选项。所有设置实时生效，刷新页面后保持。
+
+<img src="./sample.png"  width="300" />
 
 ## 功能列表
 

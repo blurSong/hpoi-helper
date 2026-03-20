@@ -197,6 +197,11 @@ var matchCurrentUrl = (patterns) => {
 			defaultValue: false,
 			displayName: "【角色页】屏蔽相关商品",
 			description: "隐藏角色详情页底部的相关商品推荐区"
+		},
+		blockCompanyOfficialMerch: {
+			defaultValue: false,
+			displayName: "【厂商页】屏蔽自营周边",
+			description: "隐藏厂商详情页顶部的淘宝自营周边推荐区"
 		}
 	};
 	var CSS_RULES = {
@@ -223,6 +228,7 @@ var matchCurrentUrl = (patterns) => {
 	};
 	var ITEM_PAGE_RE = /\/hobby\/\d+$/;
 	var CHAR_PAGE_RE = /\/charactar\/\d+$/;
+	var COMPANY_PAGE_RE = /\/company\/\d+$/;
 	var EXPAND_ID = "bn-layout-expand";
 	var EXPAND_CSS = `
   .home-right { display: none !important; }
@@ -270,6 +276,19 @@ var shopBox = null;
 		if (hide) el.style.setProperty("display", "none", "important");
 		else el.style.removeProperty("display");
 	}
+	var companyTaobaoBox = null;
+	function findCompanyTaobaoBox() {
+		if (companyTaobaoBox) return companyTaobaoBox;
+		if (!COMPANY_PAGE_RE.test(location.pathname)) return null;
+		companyTaobaoBox = dq(".hpoi-taobao-box")?.closest(".hpoi-box") ?? null;
+		return companyTaobaoBox;
+	}
+	function applyCompanyOfficialMerch(hide) {
+		const el = findCompanyTaobaoBox();
+		if (!el) return;
+		if (hide) el.style.setProperty("display", "none", "important");
+		else el.style.removeProperty("display");
+	}
 	function applyStyles(opts) {
 		for (const key of Object.keys(CSS_RULES)) {
 			const rule = CSS_RULES[key];
@@ -279,6 +298,7 @@ var shopBox = null;
 		applyShopRecommend(opts.blockLeftShopRecommend);
 		applyItemRelatedProducts(opts.blockItemRelatedProducts);
 		applyCharRelatedProducts(opts.blockCharRelatedProducts);
+		applyCompanyOfficialMerch(opts.blockCompanyOfficialMerch);
 		if (opts.blockRightAdBanner && opts.blockRightRanking && opts.blockRightHotRecommend) addStyle(EXPAND_CSS, EXPAND_ID);
 		else removeStyle(EXPAND_ID);
 	}
@@ -288,9 +308,11 @@ var shopBox = null;
 		applyShopRecommend(false);
 		applyItemRelatedProducts(false);
 		applyCharRelatedProducts(false);
+		applyCompanyOfficialMerch(false);
 		shopBox = null;
 		itemTaobaoBox = null;
 		charTaobaoBox = null;
+		companyTaobaoBox = null;
 	}
 	var cleanups$1 = [];
 	var component$1 = defineComponent({
@@ -304,7 +326,8 @@ var shopBox = null;
 			/hpoi\.net\/(index)?$/,
 			/hpoi\.net\/user\/home/,
 			/hpoi\.net\/hobby/,
-			/hpoi\.net\/charactar/
+			/hpoi\.net\/charactar/,
+			/hpoi\.net\/company/
 		],
 		options: schema$1,
 		entry: ({ options }) => {

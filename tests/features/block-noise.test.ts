@@ -38,6 +38,7 @@ describe('block-noise — homepage', () => {
       blockHobbyTopBanner: false,
       blockItemRelatedProducts: false,
       blockCharRelatedProducts: false,
+      blockCompanyOfficialMerch: false,
     }, enabled: true })
     expect(document.head.querySelectorAll('style').length).toBe(0)
   })
@@ -53,6 +54,7 @@ describe('block-noise — homepage', () => {
       blockHobbyTopBanner: false,
       blockItemRelatedProducts: false,
       blockCharRelatedProducts: false,
+      blockCompanyOfficialMerch: false,
     }, enabled: true })
     expect(styleCount('bn-right-ad')).toBe(1)
     expect(styleCount('bn-layout-expand')).toBe(0) // not all right-col blocked
@@ -69,6 +71,7 @@ describe('block-noise — homepage', () => {
       blockHobbyTopBanner: false,
       blockItemRelatedProducts: false,
       blockCharRelatedProducts: false,
+      blockCompanyOfficialMerch: false,
     }, enabled: true })
     expect(styleCount('bn-right-ad')).toBe(1)
     expect(styleCount('bn-right-ranking')).toBe(1)
@@ -87,6 +90,7 @@ describe('block-noise — homepage', () => {
       blockHobbyTopBanner: false,
       blockItemRelatedProducts: false,
       blockCharRelatedProducts: false,
+      blockCompanyOfficialMerch: false,
     }, enabled: true })
     expect(styleCount('bn-layout-expand')).toBe(0)
   })
@@ -102,6 +106,7 @@ describe('block-noise — homepage', () => {
       blockHobbyTopBanner: false,
       blockItemRelatedProducts: false,
       blockCharRelatedProducts: false,
+      blockCompanyOfficialMerch: false,
     }, enabled: true })
     expect(document.head.querySelectorAll('style').length).toBeGreaterThan(0)
 
@@ -130,6 +135,7 @@ describe('block-noise — hobby page', () => {
       blockHobbyTopBanner: true,
       blockItemRelatedProducts: false,
       blockCharRelatedProducts: false,
+      blockCompanyOfficialMerch: false,
     }, enabled: true })
     expect(styleCount('bn-hobby-top')).toBe(1)
   })
@@ -145,6 +151,7 @@ describe('block-noise — hobby page', () => {
       blockHobbyTopBanner: true,
       blockItemRelatedProducts: false,
       blockCharRelatedProducts: false,
+      blockCompanyOfficialMerch: false,
     }, enabled: true })
     const styleEl = document.head.querySelector('[data-hpoi-style="bn-hobby-top"]')
     expect(styleEl?.textContent).toContain('.hpoi-topcarousel-box')
@@ -161,6 +168,7 @@ const ALL_OFF = {
   blockHobbyTopBanner: false,
   blockItemRelatedProducts: false,
   blockCharRelatedProducts: false,
+  blockCompanyOfficialMerch: false,
 }
 
 /** Build a minimal DOM mimicking the item page's 关联商品 structure */
@@ -266,6 +274,59 @@ describe('block-noise — character page (相关商品)', () => {
     const box = setupCharPageDom()
     const c = await load('https://www.hpoi.net/charactar/262')
     await c.entry!({ options: { ...ALL_OFF, blockCharRelatedProducts: true }, enabled: true })
+    expect(box.style.display).toBe('none')
+    await c.unload!()
+    expect(box.style.display).toBe('')
+  })
+})
+
+/** Build a minimal DOM mimicking the company page's 自营周边 structure */
+function setupCompanyPageDom() {
+  const box = document.createElement('div')
+  box.className = 'hpoi-box'
+  const taobao = document.createElement('div')
+  taobao.className = 'hpoi-taobao-box row'
+  box.appendChild(taobao)
+  document.body.appendChild(box)
+  return box
+}
+
+describe('block-noise — company page (自营周边)', () => {
+  beforeEach(() => {
+    vi.mocked(GM_getValue).mockReturnValue(undefined)
+    document.head.innerHTML = ''
+    document.body.innerHTML = ''
+  })
+  afterEach(() => {
+    document.head.innerHTML = ''
+    document.body.innerHTML = ''
+  })
+
+  it('hides entire .hpoi-box container on company page when enabled', async () => {
+    const box = setupCompanyPageDom()
+    const c = await load('https://www.hpoi.net/company/259')
+    await c.entry!({ options: { ...ALL_OFF, blockCompanyOfficialMerch: true }, enabled: true })
+    expect(box.style.display).toBe('none')
+  })
+
+  it('does NOT hide on homepage even when enabled', async () => {
+    const box = setupCompanyPageDom()
+    const c = await load('https://www.hpoi.net/user/home')
+    await c.entry!({ options: { ...ALL_OFF, blockCompanyOfficialMerch: true }, enabled: true })
+    expect(box.style.display).not.toBe('none')
+  })
+
+  it('does NOT hide on item page', async () => {
+    const box = setupCompanyPageDom()
+    const c = await load('https://www.hpoi.net/hobby/120928')
+    await c.entry!({ options: { ...ALL_OFF, blockCompanyOfficialMerch: true }, enabled: true })
+    expect(box.style.display).not.toBe('none')
+  })
+
+  it('restores display on unload', async () => {
+    const box = setupCompanyPageDom()
+    const c = await load('https://www.hpoi.net/company/259')
+    await c.entry!({ options: { ...ALL_OFF, blockCompanyOfficialMerch: true }, enabled: true })
     expect(box.style.display).toBe('none')
     await c.unload!()
     expect(box.style.display).toBe('')
