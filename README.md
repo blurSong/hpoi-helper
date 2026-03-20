@@ -14,7 +14,7 @@ git clone <repo-url> && cd hpoi-helper
 pnpm install && pnpm build
 ```
 
-构建产物位于 `dist/hpoi-helper.user.js`，在 Tampermonkey 管理面板中选择「从文件安装」导入。
+构建产物位于 `dist/hpoi-helper.user.js`，在 Tampermonkey 管理面板中选择「实用工具」->「导入」。
 
 ## 使用
 
@@ -28,7 +28,7 @@ pnpm install && pnpm build
 
 ### 屏蔽噪音内容
 
-屏蔽hopi无处不在的广告、推荐、排行榜等干扰内容。详见选项名称。
+屏蔽hpoi各处的广告、推荐、排行榜等内容。详见选项名称。
 
 > 当首页右栏三项全部开启时，中间信息流自动扩展至 75% 宽度。
 

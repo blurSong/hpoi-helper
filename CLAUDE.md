@@ -65,7 +65,7 @@ src/
 
 **File:** `src/features/block-noise/index.ts`  |  **Pages:** `/user/home`, `/hobby/*`, `/charactar/*`, `/company/*`, `/series/*`, `/works/*`  |  `alwaysOn: true`
 
-> 屏蔽hopi无处不在的广告、推荐、排行榜等干扰内容。
+> 屏蔽hpoi各处的广告、推荐、排行榜等内容。
 
 Eleven boolean options (all default `false`). CSS injection for eight (`blockRightAdBanner`, `blockRightRanking`, `blockRightHotRecommend`, `blockLeftPraiseRanking`, `blockHobbyTopBanner`, `blockCompanyOfficialMerch`, `blockSeriesOfficialMerch`, `blockWorksRelatedProducts`). DOM-based hiding via `createDomHider` for three:
 - `blockLeftShopRecommend` — locates `#taobao-more` → `.hpoi-home-box-lt` (CSS `:has()` can't distinguish it from `待补款`)
