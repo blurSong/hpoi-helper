@@ -63,9 +63,9 @@ src/
 
 ### `blockNoise` — 屏蔽噪音内容
 
-**File:** `src/features/block-noise/index.ts`  |  **Pages:** `/user/home`, `/hobby/*`, `/charactar/*`, `/company/*`  |  `alwaysOn: true`
+**File:** `src/features/block-noise/index.ts`  |  **Pages:** `/user/home`, `/hobby/*`, `/charactar/*`, `/company/*`, `/series/*`, `/works/*`  |  `alwaysOn: true`
 
-Nine boolean options (all default `false`). CSS injection for six (`blockRightAdBanner`, `blockRightRanking`, `blockRightHotRecommend`, `blockLeftPraiseRanking`, `blockHobbyTopBanner`, `blockCompanyOfficialMerch`). DOM-based hiding via `createDomHider` for three:
+Eleven boolean options (all default `false`). CSS injection for eight (`blockRightAdBanner`, `blockRightRanking`, `blockRightHotRecommend`, `blockLeftPraiseRanking`, `blockHobbyTopBanner`, `blockCompanyOfficialMerch`, `blockSeriesOfficialMerch`, `blockWorksRelatedProducts`). DOM-based hiding via `createDomHider` for three:
 - `blockLeftShopRecommend` — locates `#taobao-more` → `.hpoi-home-box-lt` (CSS `:has()` can't distinguish it from `待补款`)
 - `blockItemRelatedProducts` — locates `.hpoi-taobao-box` → `.hpoi-box`, scoped to `/hobby/\d+`
 - `blockCharRelatedProducts` — locates `.taobao-relate-swiper` → `.charactar-ibox`, scoped to `/charactar/\d+`

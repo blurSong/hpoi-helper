@@ -55,6 +55,16 @@ const schema = {
     displayName: '【厂商页】屏蔽自营周边',
     description: '隐藏厂商详情页顶部的淘宝自营周边推荐区',
   },
+  blockSeriesOfficialMerch: {
+    defaultValue: false as boolean,
+    displayName: '【系列页】屏蔽自营周边',
+    description: '隐藏系列详情页的淘宝自营周边推荐区',
+  },
+  blockWorksRelatedProducts: {
+    defaultValue: false as boolean,
+    displayName: '【作品页】屏蔽相关商品',
+    description: '隐藏作品详情页的淘宝相关商品推荐区',
+  },
 } satisfies OptionsSchema
 
 type Opts = { [K in keyof typeof schema]: boolean }
@@ -90,6 +100,14 @@ const CSS_RULES: Partial<Record<keyof Opts, { id: string; css: string }>> = {
   blockCompanyOfficialMerch: {
     id: 'bn-company-shop',
     css: `.company-container-shop-hobby { display: none !important; }`,
+  },
+  blockSeriesOfficialMerch: {
+    id: 'bn-series-shop',
+    css: `.series-container-shop-hobby { display: none !important; }`,
+  },
+  blockWorksRelatedProducts: {
+    id: 'bn-works-shop',
+    css: `.works-ibox:has(.taobao-relate-swiper) { display: none !important; }`,
   },
 }
 
@@ -223,7 +241,7 @@ export const component = defineComponent({
   enabledByDefault: true,
   alwaysOn: true,
 
-  urlInclude: [/hpoi\.net\/(index)?$/, /hpoi\.net\/user\/home/, /hpoi\.net\/hobby/, /hpoi\.net\/charactar/, /hpoi\.net\/company/],
+  urlInclude: [/hpoi\.net\/(index)?$/, /hpoi\.net\/user\/home/, /hpoi\.net\/hobby/, /hpoi\.net\/charactar/, /hpoi\.net\/company/, /hpoi\.net\/series/, /hpoi\.net\/works/],
 
   options: schema,
 

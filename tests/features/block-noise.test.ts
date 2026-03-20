@@ -30,6 +30,8 @@ const ALL_OFF = {
   blockItemRelatedProducts: false,
   blockCharRelatedProducts: false,
   blockCompanyOfficialMerch: false,
+  blockSeriesOfficialMerch: false,
+  blockWorksRelatedProducts: false,
 }
 
 /** Build a minimal DOM mimicking the item page's 关联商品 structure */
@@ -257,5 +259,70 @@ describe('block-noise — company page (自营周边)', () => {
     expect(styleCount('bn-company-shop')).toBe(1)
     await c.unload!()
     expect(styleCount('bn-company-shop')).toBe(0)
+  })
+})
+
+describe('block-noise — series page (自营周边)', () => {
+  beforeEach(() => {
+    vi.mocked(GM_getValue).mockReturnValue(undefined)
+    document.head.innerHTML = ''
+  })
+  afterEach(() => {
+    document.head.innerHTML = ''
+  })
+
+  it('injects CSS for .series-container-shop-hobby when enabled', async () => {
+    const c = await load('https://www.hpoi.net/series/1234')
+    await c.entry!({ options: { ...ALL_OFF, blockSeriesOfficialMerch: true }, enabled: true })
+    expect(styleCount('bn-series-shop')).toBe(1)
+    const styleEl = document.head.querySelector('[data-hpoi-style="bn-series-shop"]')
+    expect(styleEl?.textContent).toContain('.series-container-shop-hobby')
+  })
+
+  it('does not inject CSS when disabled', async () => {
+    const c = await load('https://www.hpoi.net/series/1234')
+    await c.entry!({ options: { ...ALL_OFF, blockSeriesOfficialMerch: false }, enabled: true })
+    expect(styleCount('bn-series-shop')).toBe(0)
+  })
+
+  it('removes CSS on unload', async () => {
+    const c = await load('https://www.hpoi.net/series/1234')
+    await c.entry!({ options: { ...ALL_OFF, blockSeriesOfficialMerch: true }, enabled: true })
+    expect(styleCount('bn-series-shop')).toBe(1)
+    await c.unload!()
+    expect(styleCount('bn-series-shop')).toBe(0)
+  })
+})
+
+describe('block-noise — works page (相关商品)', () => {
+  beforeEach(() => {
+    vi.mocked(GM_getValue).mockReturnValue(undefined)
+    document.head.innerHTML = ''
+  })
+  afterEach(() => {
+    document.head.innerHTML = ''
+  })
+
+  it('injects CSS for .works-ibox:has(.taobao-relate-swiper) when enabled', async () => {
+    const c = await load('https://www.hpoi.net/works/41286')
+    await c.entry!({ options: { ...ALL_OFF, blockWorksRelatedProducts: true }, enabled: true })
+    expect(styleCount('bn-works-shop')).toBe(1)
+    const styleEl = document.head.querySelector('[data-hpoi-style="bn-works-shop"]')
+    expect(styleEl?.textContent).toContain('.works-ibox')
+    expect(styleEl?.textContent).toContain('.taobao-relate-swiper')
+  })
+
+  it('does not inject CSS when disabled', async () => {
+    const c = await load('https://www.hpoi.net/works/41286')
+    await c.entry!({ options: { ...ALL_OFF, blockWorksRelatedProducts: false }, enabled: true })
+    expect(styleCount('bn-works-shop')).toBe(0)
+  })
+
+  it('removes CSS on unload', async () => {
+    const c = await load('https://www.hpoi.net/works/41286')
+    await c.entry!({ options: { ...ALL_OFF, blockWorksRelatedProducts: true }, enabled: true })
+    expect(styleCount('bn-works-shop')).toBe(1)
+    await c.unload!()
+    expect(styleCount('bn-works-shop')).toBe(0)
   })
 })

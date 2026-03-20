@@ -202,6 +202,16 @@ var matchCurrentUrl = (patterns) => {
 			defaultValue: false,
 			displayName: "【厂商页】屏蔽自营周边",
 			description: "隐藏厂商详情页顶部的淘宝自营周边推荐区"
+		},
+		blockSeriesOfficialMerch: {
+			defaultValue: false,
+			displayName: "【系列页】屏蔽自营周边",
+			description: "隐藏系列详情页的淘宝自营周边推荐区"
+		},
+		blockWorksRelatedProducts: {
+			defaultValue: false,
+			displayName: "【作品页】屏蔽相关商品",
+			description: "隐藏作品详情页的淘宝相关商品推荐区"
 		}
 	};
 	var CSS_RULES = {
@@ -228,6 +238,14 @@ var matchCurrentUrl = (patterns) => {
 		blockCompanyOfficialMerch: {
 			id: "bn-company-shop",
 			css: `.company-container-shop-hobby { display: none !important; }`
+		},
+		blockSeriesOfficialMerch: {
+			id: "bn-series-shop",
+			css: `.series-container-shop-hobby { display: none !important; }`
+		},
+		blockWorksRelatedProducts: {
+			id: "bn-works-shop",
+			css: `.works-ibox:has(.taobao-relate-swiper) { display: none !important; }`
 		}
 	};
 	var ITEM_PAGE_RE = /\/hobby\/\d+$/;
@@ -307,7 +325,9 @@ function createDomHider(finder) {
 			/hpoi\.net\/user\/home/,
 			/hpoi\.net\/hobby/,
 			/hpoi\.net\/charactar/,
-			/hpoi\.net\/company/
+			/hpoi\.net\/company/,
+			/hpoi\.net\/series/,
+			/hpoi\.net\/works/
 		],
 		options: schema$1,
 		entry: ({ options }) => {
