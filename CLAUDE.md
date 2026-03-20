@@ -65,6 +65,8 @@ src/
 
 **File:** `src/features/block-noise/index.ts`  |  **Pages:** `/user/home`, `/hobby/*`, `/charactar/*`, `/company/*`, `/series/*`, `/works/*`  |  `alwaysOn: true`
 
+> 屏蔽hopi无处不在的广告、推荐、排行榜等干扰内容。
+
 Eleven boolean options (all default `false`). CSS injection for eight (`blockRightAdBanner`, `blockRightRanking`, `blockRightHotRecommend`, `blockLeftPraiseRanking`, `blockHobbyTopBanner`, `blockCompanyOfficialMerch`, `blockSeriesOfficialMerch`, `blockWorksRelatedProducts`). DOM-based hiding via `createDomHider` for three:
 - `blockLeftShopRecommend` — locates `#taobao-more` → `.hpoi-home-box-lt` (CSS `:has()` can't distinguish it from `待补款`)
 - `blockItemRelatedProducts` — locates `.hpoi-taobao-box` → `.hpoi-box`, scoped to `/hobby/\d+`
@@ -72,7 +74,7 @@ Eleven boolean options (all default `false`). CSS injection for eight (`blockRig
 
 When all three right-column options are true, middle feed expands from 50% → 75%.
 
-### `customBrowse` — 自定义浏览
+### `customBrowse` — 自动资料库筛选项
 
 **File:** `src/features/custom-browse/index.ts`  |  **Pages:** all  |  `alwaysOn: true`
 

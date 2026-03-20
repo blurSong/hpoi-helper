@@ -236,7 +236,7 @@ let cleanups: Array<() => void> = []
 export const component = defineComponent({
   name: 'blockNoise',
   displayName: '屏蔽噪音内容',
-  description: '分别屏蔽首页和手办页的广告、推荐、排行榜等干扰内容',
+  description: '屏蔽hopi无处不在的广告、推荐、排行榜等干扰内容',
   tags: [componentTags.display],
   enabledByDefault: true,
   alwaysOn: true,

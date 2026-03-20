@@ -315,7 +315,7 @@ function createDomHider(finder) {
 	var component$1 = defineComponent({
 		name: "blockNoise",
 		displayName: "屏蔽噪音内容",
-		description: "分别屏蔽首页和手办页的广告、推荐、排行榜等干扰内容",
+		description: "屏蔽hopi无处不在的广告、推荐、排行榜等干扰内容",
 		tags: [componentTags.display],
 		enabledByDefault: true,
 		alwaysOn: true,
@@ -407,8 +407,7 @@ function onUrlChange(callback) {
 	var cleanups = [];
 	var component = defineComponent({
 		name: "customBrowse",
-		displayName: "自定义浏览",
-		description: "自定义资料库的浏览行为",
+		displayName: "自动资料库筛选项",
 		tags: [componentTags.utility],
 		enabledByDefault: true,
 		alwaysOn: true,

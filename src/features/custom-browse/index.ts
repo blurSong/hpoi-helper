@@ -62,8 +62,7 @@ let cleanups: Array<() => void> = []
 
 export const component = defineComponent({
   name: 'customBrowse',
-  displayName: '自定义浏览',
-  description: '自定义资料库的浏览行为',
+  displayName: '自动资料库筛选项',
   tags: [componentTags.utility],
   enabledByDefault: true,
   alwaysOn: true,
