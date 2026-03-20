@@ -111,87 +111,70 @@ const EXPAND_CSS = `
 `
 
 // ---------------------------------------------------------------------------
-// DOM-based hiding for 商品推荐
-// (CSS selectors cannot reliably distinguish it from 待补款/关注动态)
+// DOM-based hiding helpers
 // ---------------------------------------------------------------------------
 
-/** The 商品推荐 box element, cached after first lookup */
-let shopBox: HTMLElement | null = null
-
-function findShopBox(): HTMLElement | null {
-  if (shopBox) return shopBox
-  // #taobao-more is the "更多" link unique to 商品推荐
-  shopBox = dq<HTMLElement>('#taobao-more')?.closest<HTMLElement>('.hpoi-home-box-lt') ?? null
-  return shopBox
+interface DomHider {
+  apply(hide: boolean): void
+  reset(): void
 }
 
-function applyShopRecommend(hide: boolean): void {
-  const el = findShopBox()
-  if (!el) return
-  if (hide) {
-    el.style.setProperty('display', 'none', 'important')
-  } else {
-    el.style.removeProperty('display')
+/**
+ * Creates a cached DOM element hider. The finder locates the element once and
+ * caches it; subsequent calls reuse the cached reference. `apply(true)` hides
+ * the element, `apply(false)` restores it. `reset()` clears the cache.
+ */
+function createDomHider(finder: () => HTMLElement | null): DomHider {
+  let cached: HTMLElement | null = null
+
+  function find(): HTMLElement | null {
+    if (cached) return cached
+    cached = finder()
+    return cached
+  }
+
+  return {
+    apply(hide: boolean): void {
+      const el = find()
+      if (!el) return
+      if (hide) {
+        el.style.setProperty('display', 'none', 'important')
+      } else {
+        el.style.removeProperty('display')
+      }
+    },
+    reset(): void {
+      cached = null
+    },
   }
 }
 
-// ---------------------------------------------------------------------------
-// DOM-based hiding for 关联商品 on item detail pages
-// The .hpoi-taobao-box only contains the product cards; the heading "关联商品"
-// and the "更多" link sit outside it in a parent .hpoi-box container.
-// We hide the entire .hpoi-box by walking up from .hpoi-taobao-box.
-// ---------------------------------------------------------------------------
+// 商品推荐: CSS cannot reliably distinguish it from 待补款/关注动态,
+// so we locate it by the unique #taobao-more anchor.
+const shopRecommendHider = createDomHider(
+  () => dq<HTMLElement>('#taobao-more')?.closest<HTMLElement>('.hpoi-home-box-lt') ?? null,
+)
 
-let itemTaobaoBox: HTMLElement | null = null
-
-function findItemTaobaoBox(): HTMLElement | null {
-  if (itemTaobaoBox) return itemTaobaoBox
+// 关联商品 on item detail pages: the .hpoi-taobao-box only contains product
+// cards; the heading and "更多" link sit in a parent .hpoi-box container.
+const itemRelatedHider = createDomHider(() => {
   if (!ITEM_PAGE_RE.test(location.pathname)) return null
-  itemTaobaoBox = dq<HTMLElement>('.hpoi-taobao-box')?.closest<HTMLElement>('.hpoi-box') ?? null
-  return itemTaobaoBox
-}
+  return dq<HTMLElement>('.hpoi-taobao-box')?.closest<HTMLElement>('.hpoi-box') ?? null
+})
 
-function applyItemRelatedProducts(hide: boolean): void {
-  const el = findItemTaobaoBox()
-  if (!el) return
-  if (hide) {
-    el.style.setProperty('display', 'none', 'important')
-  } else {
-    el.style.removeProperty('display')
-  }
-}
-
-// ---------------------------------------------------------------------------
-// DOM-based hiding for 相关商品 on character pages
-// Structure: .taobao-relate-swiper inside .charactar-ibox
-// (different from item pages which use .hpoi-taobao-box inside .hpoi-box)
-// ---------------------------------------------------------------------------
-
-let charTaobaoBox: HTMLElement | null = null
-
-function findCharTaobaoBox(): HTMLElement | null {
-  if (charTaobaoBox) return charTaobaoBox
+// 相关商品 on character pages: .taobao-relate-swiper inside .charactar-ibox
+const charRelatedHider = createDomHider(() => {
   if (!CHAR_PAGE_RE.test(location.pathname)) return null
-  charTaobaoBox =
-    dq<HTMLElement>('.taobao-relate-swiper')?.closest<HTMLElement>('.charactar-ibox') ?? null
-  return charTaobaoBox
-}
+  return dq<HTMLElement>('.taobao-relate-swiper')?.closest<HTMLElement>('.charactar-ibox') ?? null
+})
 
-function applyCharRelatedProducts(hide: boolean): void {
-  const el = findCharTaobaoBox()
-  if (!el) return
-  if (hide) {
-    el.style.setProperty('display', 'none', 'important')
-  } else {
-    el.style.removeProperty('display')
-  }
-}
+const domHiders = [shopRecommendHider, itemRelatedHider, charRelatedHider] as const
 
 // ---------------------------------------------------------------------------
 // Apply / remove helpers
 // ---------------------------------------------------------------------------
 
-function applyStyles(opts: Opts) {
+function applyStyles(opts: Opts): void {
   for (const key of Object.keys(CSS_RULES) as Array<keyof typeof CSS_RULES>) {
     const rule = CSS_RULES[key]!
     if (opts[key]) {
@@ -201,11 +184,9 @@ function applyStyles(opts: Opts) {
     }
   }
 
-  applyShopRecommend(opts.blockLeftShopRecommend)
-
-  applyItemRelatedProducts(opts.blockItemRelatedProducts)
-
-  applyCharRelatedProducts(opts.blockCharRelatedProducts)
+  shopRecommendHider.apply(opts.blockLeftShopRecommend)
+  itemRelatedHider.apply(opts.blockItemRelatedProducts)
+  charRelatedHider.apply(opts.blockCharRelatedProducts)
 
   // Expand the middle column only when the entire right column is gone
   if (opts.blockRightAdBanner && opts.blockRightRanking && opts.blockRightHotRecommend) {
@@ -215,15 +196,13 @@ function applyStyles(opts: Opts) {
   }
 }
 
-function removeAllStyles() {
+function removeAllStyles(): void {
   for (const rule of Object.values(CSS_RULES)) removeStyle(rule!.id)
   removeStyle(EXPAND_ID)
-  applyShopRecommend(false)
-  applyItemRelatedProducts(false)
-  applyCharRelatedProducts(false)
-  shopBox = null
-  itemTaobaoBox = null
-  charTaobaoBox = null
+  for (const hider of domHiders) {
+    hider.apply(false)
+    hider.reset()
+  }
 }
 
 // ---------------------------------------------------------------------------

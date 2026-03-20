@@ -241,65 +241,58 @@ var matchCurrentUrl = (patterns) => {
     max-width: 75% !important;
   }
 `;
-var shopBox = null;
-	function findShopBox() {
-		if (shopBox) return shopBox;
-		shopBox = dq("#taobao-more")?.closest(".hpoi-home-box-lt") ?? null;
-		return shopBox;
+function createDomHider(finder) {
+		let cached = null;
+		function find() {
+			if (cached) return cached;
+			cached = finder();
+			return cached;
+		}
+		return {
+			apply(hide) {
+				const el = find();
+				if (!el) return;
+				if (hide) el.style.setProperty("display", "none", "important");
+				else el.style.removeProperty("display");
+			},
+			reset() {
+				cached = null;
+			}
+		};
 	}
-	function applyShopRecommend(hide) {
-		const el = findShopBox();
-		if (!el) return;
-		if (hide) el.style.setProperty("display", "none", "important");
-		else el.style.removeProperty("display");
-	}
-	var itemTaobaoBox = null;
-	function findItemTaobaoBox() {
-		if (itemTaobaoBox) return itemTaobaoBox;
+	var shopRecommendHider = createDomHider(() => dq("#taobao-more")?.closest(".hpoi-home-box-lt") ?? null);
+	var itemRelatedHider = createDomHider(() => {
 		if (!ITEM_PAGE_RE.test(location.pathname)) return null;
-		itemTaobaoBox = dq(".hpoi-taobao-box")?.closest(".hpoi-box") ?? null;
-		return itemTaobaoBox;
-	}
-	function applyItemRelatedProducts(hide) {
-		const el = findItemTaobaoBox();
-		if (!el) return;
-		if (hide) el.style.setProperty("display", "none", "important");
-		else el.style.removeProperty("display");
-	}
-	var charTaobaoBox = null;
-	function findCharTaobaoBox() {
-		if (charTaobaoBox) return charTaobaoBox;
+		return dq(".hpoi-taobao-box")?.closest(".hpoi-box") ?? null;
+	});
+	var charRelatedHider = createDomHider(() => {
 		if (!CHAR_PAGE_RE.test(location.pathname)) return null;
-		charTaobaoBox = dq(".taobao-relate-swiper")?.closest(".charactar-ibox") ?? null;
-		return charTaobaoBox;
-	}
-	function applyCharRelatedProducts(hide) {
-		const el = findCharTaobaoBox();
-		if (!el) return;
-		if (hide) el.style.setProperty("display", "none", "important");
-		else el.style.removeProperty("display");
-	}
+		return dq(".taobao-relate-swiper")?.closest(".charactar-ibox") ?? null;
+	});
+	var domHiders = [
+		shopRecommendHider,
+		itemRelatedHider,
+		charRelatedHider
+	];
 	function applyStyles(opts) {
 		for (const key of Object.keys(CSS_RULES)) {
 			const rule = CSS_RULES[key];
 			if (opts[key]) addStyle(rule.css, rule.id);
 			else removeStyle(rule.id);
 		}
-		applyShopRecommend(opts.blockLeftShopRecommend);
-		applyItemRelatedProducts(opts.blockItemRelatedProducts);
-		applyCharRelatedProducts(opts.blockCharRelatedProducts);
+		shopRecommendHider.apply(opts.blockLeftShopRecommend);
+		itemRelatedHider.apply(opts.blockItemRelatedProducts);
+		charRelatedHider.apply(opts.blockCharRelatedProducts);
 		if (opts.blockRightAdBanner && opts.blockRightRanking && opts.blockRightHotRecommend) addStyle(EXPAND_CSS, EXPAND_ID);
 		else removeStyle(EXPAND_ID);
 	}
 	function removeAllStyles() {
 		for (const rule of Object.values(CSS_RULES)) removeStyle(rule.id);
 		removeStyle(EXPAND_ID);
-		applyShopRecommend(false);
-		applyItemRelatedProducts(false);
-		applyCharRelatedProducts(false);
-		shopBox = null;
-		itemTaobaoBox = null;
-		charTaobaoBox = null;
+		for (const hider of domHiders) {
+			hider.apply(false);
+			hider.reset();
+		}
 	}
 	var cleanups$1 = [];
 	var component$1 = defineComponent({

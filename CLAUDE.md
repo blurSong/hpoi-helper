@@ -63,9 +63,14 @@ src/
 
 ### `blockNoise` — 屏蔽噪音内容
 
-**File:** `src/features/block-noise/index.ts`  |  **Pages:** `/user/home`, `/hobby/*`  |  `alwaysOn: true`
+**File:** `src/features/block-noise/index.ts`  |  **Pages:** `/user/home`, `/hobby/*`, `/charactar/*`, `/company/*`  |  `alwaysOn: true`
 
-Seven boolean options (all default `false`). CSS injection for five; DOM lookup via `#taobao-more` for `blockLeftShopRecommend` (since `待补款` also uses `.hpoi-taobao-box`); conditional CSS for `blockItemRelatedProducts` (only on item pages `/hobby/\d+` where `.hpoi-taobao-box` is unambiguous). When all three right-column options are true, middle feed expands from 50% → 75%.
+Nine boolean options (all default `false`). CSS injection for six (`blockRightAdBanner`, `blockRightRanking`, `blockRightHotRecommend`, `blockLeftPraiseRanking`, `blockHobbyTopBanner`, `blockCompanyOfficialMerch`). DOM-based hiding via `createDomHider` for three:
+- `blockLeftShopRecommend` — locates `#taobao-more` → `.hpoi-home-box-lt` (CSS `:has()` can't distinguish it from `待补款`)
+- `blockItemRelatedProducts` — locates `.hpoi-taobao-box` → `.hpoi-box`, scoped to `/hobby/\d+`
+- `blockCharRelatedProducts` — locates `.taobao-relate-swiper` → `.charactar-ibox`, scoped to `/charactar/\d+`
+
+When all three right-column options are true, middle feed expands from 50% → 75%.
 
 ### `customBrowse` — 自定义浏览
 
@@ -103,5 +108,6 @@ export const component = defineComponent({
 - Style injection: `addStyle(css, id)` paired with `removeStyle(id)` in `unload`
 - Option defaults: use `false as boolean` (not literal `false`) for correct TypeScript inference
 - Lifecycle hooks that may return void: wrap with `Promise.resolve(fn()).catch(...)` in loader
-- Tests: vitest + jsdom; stub GM APIs with `vi.stubGlobal`; `vi.resetModules()` between tests
+- Tests: vitest + jsdom; stub GM APIs with `vi.stubGlobal`; `vi.resetModules()` between tests; use `ALL_OFF` spread to keep test options concise
 - `alwaysOn: true` on a component hides the master toggle in the settings panel
+- DOM hiding: use `createDomHider(finder)` — returns `{ apply(hide), reset() }` with built-in caching; group hiders in a tuple for uniform cleanup in `removeAllStyles`
