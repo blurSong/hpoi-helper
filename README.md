@@ -22,7 +22,7 @@ pnpm install && pnpm build
 
 点击按钮打开设置面板，即可启用各项功能并调整选项。所有设置实时生效，刷新页面后保持。
 
-<img src="./sample.png"  width="300" />
+<img src="./sample.png"  width="250" />
 
 ## 功能列表
 
